@@ -131,12 +131,12 @@ const createWindow = () => {
   });
 
   // IPC handler to copy an image to the project folder
-  ipcMain.handle('copy-image', async (event, projectName: string, sourcePath: string) => {
+  ipcMain.handle('copy-image', async (event, projectName: string, sourcePath: string, customFileName: string) => {
     const projectPath = path.join(loraDataRoot, projectName);
     if (!fs.existsSync(projectPath)) {
       fs.mkdirSync(projectPath, { recursive: true });
     }
-    const destFileName = path.basename(sourcePath);
+    const destFileName = `${customFileName}${path.extname(sourcePath)}`; // Use custom filename with original extension
     const destPath = path.join(projectPath, destFileName);
 
     try {

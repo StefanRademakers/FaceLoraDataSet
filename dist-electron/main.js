@@ -125,12 +125,12 @@ const createWindow = () => {
         }
     });
     // IPC handler to copy an image to the project folder
-    electron_1.ipcMain.handle('copy-image', async (event, projectName, sourcePath) => {
+    electron_1.ipcMain.handle('copy-image', async (event, projectName, sourcePath, customFileName) => {
         const projectPath = path_1.default.join(loraDataRoot, projectName);
         if (!fs_1.default.existsSync(projectPath)) {
             fs_1.default.mkdirSync(projectPath, { recursive: true });
         }
-        const destFileName = path_1.default.basename(sourcePath);
+        const destFileName = `${customFileName}${path_1.default.extname(sourcePath)}`; // Use custom filename with original extension
         const destPath = path_1.default.join(projectPath, destFileName);
         try {
             fs_1.default.copyFileSync(sourcePath, destPath);

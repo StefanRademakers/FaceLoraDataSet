@@ -63,17 +63,22 @@ const App: React.FC = () => {
       const currentProjectName = stateRef.current.projectName;
 
       if (currentDropTarget && currentProjectName) {
-        // 1. Copy the image to the project directory
-        const result = await window.electronAPI.copyImage(currentProjectName, filePath);
+        const { section, index } = currentDropTarget;
+
+        // Generate the new filename based on the section and index
+        const newFileName = `${section} ${index + 1}`; // Add 1 to make it 1-based index
+
+        // Copy the image to the project directory with the new filename
+        const result = await window.electronAPI.copyImage(currentProjectName, filePath, newFileName);
 
         if (result.success && result.path) {
-          // 2. Update the grid state with the new path (of the copied image)
+          // Update the grid state with the new path (of the copied image)
           setGrids((prevGrids) => {
             const newGrids = { ...prevGrids };
-            const newImages = [...(newGrids[currentDropTarget.section] || [])];
-            const finalUrl = `file://${result.path.replace(/\\/g, '/')}`;
-            newImages[currentDropTarget.index] = finalUrl;
-            newGrids[currentDropTarget.section] = newImages;
+            const newImages = [...(newGrids[section] || [])];
+            const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}` : '';
+            newImages[index] = finalUrl; // Replace the image at the current index
+            newGrids[section] = newImages;
             return newGrids;
           });
         } else {
@@ -126,7 +131,8 @@ const App: React.FC = () => {
   };
 
   const handleClickImage = (imagePath: string) => {
-    setFullscreenImage(imagePath);
+    console.log("Clicked image path:", imagePath); // Debug log
+    setFullscreenImage(imagePath); // Directly use the image path
   };
 
   const handleCloseFullscreen = () => {
@@ -173,7 +179,7 @@ declare global {
         onMenuLoad: (callback: () => void) => () => void;
         saveProject: (state: { projectName: string; grids: any }) => Promise<{ success: boolean; path?: string }>;
         loadProject: () => Promise<{ success: boolean; data?: any }>;
-        copyImage: (projectName: string, sourcePath: string) => Promise<{ success: boolean; path?: string, error?: string }>;
+        copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
       };
     }
 }
