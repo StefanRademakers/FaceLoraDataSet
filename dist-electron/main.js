@@ -179,6 +179,30 @@ const createWindow = () => {
             return [];
         }
     });
+    // IPC handler to copy an image to the clipboard
+    electron_1.ipcMain.handle('copy-image-to-clipboard', async (event, fileUrl) => {
+        try {
+            const url = new URL(fileUrl);
+            let filePath = decodeURI(url.pathname);
+            // On Windows, pathname starts with a slash, like /C:/...
+            // We need to remove the leading slash.
+            if (process.platform === 'win32' && filePath.startsWith('/')) {
+                filePath = filePath.substring(1);
+            }
+            const image = electron_1.nativeImage.createFromPath(filePath);
+            if (image.isEmpty()) {
+                console.error('Failed to create nativeImage from path:', filePath);
+                return { success: false, error: 'Image is empty or path is invalid.' };
+            }
+            electron_1.clipboard.writeImage(image);
+            return { success: true };
+        }
+        catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            console.error('Failed to copy image to clipboard:', error);
+            return { success: false, error: message };
+        }
+    });
 };
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', () => {
@@ -187,6 +211,7 @@ electron_1.app.on('window-all-closed', () => {
     electron_1.ipcMain.removeHandler('load-project');
     electron_1.ipcMain.removeHandler('copy-image');
     electron_1.ipcMain.removeHandler('get-projects');
+    electron_1.ipcMain.removeHandler('copy-image-to-clipboard');
     if (process.platform !== 'darwin') {
         electron_1.app.quit();
     }

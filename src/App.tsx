@@ -262,6 +262,7 @@ declare global {
         loadProject: (name?: string) => Promise<{ success: boolean; data?: any }>; // Allow optional project name
         copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
         getProjects: () => Promise<string[]>;
+        copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
       };
     }
 }

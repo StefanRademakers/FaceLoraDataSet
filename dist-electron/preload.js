@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     loadProject: (projectName) => ipcRenderer.invoke('load-project', projectName),
     copyImage: (projectName, sourcePath, customFileName) => ipcRenderer.invoke('copy-image', projectName, sourcePath, customFileName),
     getProjects: () => ipcRenderer.invoke('get-projects'),
+    copyImageToClipboard: (filePath) => ipcRenderer.invoke('copy-image-to-clipboard', filePath),
 });
 // Global drop listener now directly invokes the callback
 window.addEventListener('drop', (e) => {

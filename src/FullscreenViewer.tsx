@@ -1,15 +1,30 @@
 import React, { useEffect } from 'react';
 import { FullscreenViewerProps } from './types';
 
+interface FullscreenViewerProps {
+  image: string;
+  onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}
+
 const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev }) => {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
         onNext();
       } else if (e.key === 'ArrowLeft') {
         onPrev();
       } else if (e.key === 'Escape') {
         onClose();
+      } else if (e.ctrlKey && e.key === 'c' && image) {
+        e.preventDefault(); // Prevent default copy behavior
+        const result = await window.electronAPI.copyImageToClipboard(image);
+        if (result.success) {
+          console.log('Image copied to clipboard');
+        } else {
+          console.error('Failed to copy image:', result.error);
+        }
       }
     };
 
@@ -17,7 +32,7 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onNext, onPrev, onClose]);
+  }, [onNext, onPrev, onClose, image]);
 
   if (!image) return null;
 

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, Menu, ipcMain, dialog } from 'electron';
+import { app, BrowserWindow, Menu, ipcMain, dialog, clipboard, nativeImage } from 'electron';
 import path from 'path';
 import fs from 'fs';
 
@@ -186,6 +186,32 @@ const createWindow = () => {
       return [];
     }
   });
+
+  // IPC handler to copy an image to the clipboard
+  ipcMain.handle('copy-image-to-clipboard', async (event, fileUrl: string) => {
+    try {
+      const url = new URL(fileUrl);
+      let filePath = decodeURI(url.pathname);
+
+      // On Windows, pathname starts with a slash, like /C:/...
+      // We need to remove the leading slash.
+      if (process.platform === 'win32' && filePath.startsWith('/')) {
+        filePath = filePath.substring(1);
+      }
+      
+      const image = nativeImage.createFromPath(filePath);
+      if (image.isEmpty()) {
+        console.error('Failed to create nativeImage from path:', filePath);
+        return { success: false, error: 'Image is empty or path is invalid.' };
+      }
+      clipboard.writeImage(image);
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Failed to copy image to clipboard:', error);
+      return { success: false, error: message };
+    }
+  });
 };
 
 app.on('ready', createWindow);
@@ -196,6 +222,7 @@ app.on('window-all-closed', () => {
   ipcMain.removeHandler('load-project');
   ipcMain.removeHandler('copy-image');
   ipcMain.removeHandler('get-projects');
+  ipcMain.removeHandler('copy-image-to-clipboard');
   if (process.platform !== 'darwin') {
     app.quit();
   }
