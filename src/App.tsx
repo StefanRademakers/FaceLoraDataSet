@@ -146,10 +146,25 @@ const App: React.FC = () => {
     setCurrentPage('project');
   };
 
-  const handleLoadProject = (name: string) => {
+  const handleLoadProject = async (name: string) => {
     setProjectName(name);
     setCurrentPage('project');
-  };
+
+    // Fetch the project data using the project name
+    const result = await window.electronAPI.loadProject(name); // Pass the project name
+    if (result.success && result.data) {
+        const absolutePathGrids = { ...result.data.grids };
+        for (const section in absolutePathGrids) {
+            absolutePathGrids[section] = absolutePathGrids[section].map((imagePath: string | null) => {
+                if (imagePath && !imagePath.startsWith('file://')) {
+                    return `file://${imagePath.replace(/\\/g, '/')}`;
+                }
+                return imagePath;
+            });
+        }
+        setGrids(absolutePathGrids);
+    }
+};
 
   if (currentPage === 'landing') {
     return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
@@ -194,7 +209,7 @@ declare global {
         onMenuSave: (callback: () => void) => () => void;
         onMenuLoad: (callback: () => void) => () => void;
         saveProject: (state: { projectName: string; grids: any }) => Promise<{ success: boolean; path?: string }>;
-        loadProject: () => Promise<{ success: boolean; data?: any }>;
+        loadProject: (name?: string) => Promise<{ success: boolean; data?: any }>; // Allow optional project name
         copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
         getProjects: () => Promise<string[]>;
       };

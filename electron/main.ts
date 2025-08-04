@@ -11,8 +11,8 @@ if (require('electron-squirrel-startup')) {
 
 const createWindow = () => {
   const win = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    width: 1700,
+    height: 900,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -96,7 +96,31 @@ const createWindow = () => {
   });
 
   // IPC handler to load project state
-  ipcMain.handle('load-project', async () => {
+  ipcMain.handle('load-project', async (event, projectName) => {
+    if (projectName) {
+      try {
+        const projectFilePath = path.join(loraDataRoot, projectName, 'project.json');
+        const projectDir = path.dirname(projectFilePath);
+        const data = JSON.parse(fs.readFileSync(projectFilePath, 'utf-8'));
+
+        // Convert relative image names back to absolute paths for rendering
+        for (const section in data.grids) {
+          data.grids[section] = data.grids[section].map((imageName: string | null) => {
+            if (imageName) {
+              return path.join(projectDir, imageName);
+            }
+            return null;
+          });
+        }
+        return { success: true, data };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.error('Failed to load project:', error);
+        return { success: false, error: message };
+      }
+    }
+
+    // Fallback to opening a file dialog if no project name is provided
     const result = await dialog.showOpenDialog({
       title: 'Load Lora DataSet Project',
       defaultPath: loraDataRoot,

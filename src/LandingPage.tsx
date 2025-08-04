@@ -68,7 +68,7 @@ interface ElectronAPI {
   onMenuSave: (callback: () => void) => () => void;
   onMenuLoad: (callback: () => void) => () => void;
   saveProject: (state: { projectName: string; grids: any; }) => Promise<{ success: boolean; path?: string }>;
-  loadProject: () => Promise<{ success: boolean; data?: any }>;
+  loadProject: (name?: string) => Promise<{ success: boolean; data?: any }>; // Allow optional project name
   copyImage: (projectName: string, sourcePath: string, customFileName: string) => Promise<{ success: boolean; path?: string; error?: string }>;
 }
 

@@ -18,7 +18,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return () => ipcRenderer.removeListener('menu-load', callback);
   },
   saveProject: (state: any) => ipcRenderer.invoke('save-project', state),
-  loadProject: () => ipcRenderer.invoke('load-project'),
+  loadProject: (projectName?: string) => ipcRenderer.invoke('load-project', projectName),
   copyImage: (projectName: string, sourcePath: string, customFileName: string) => ipcRenderer.invoke('copy-image', projectName, sourcePath, customFileName),
   getProjects: () => ipcRenderer.invoke('get-projects'),
 });
