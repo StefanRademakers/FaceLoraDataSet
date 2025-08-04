@@ -67,9 +67,10 @@ interface ElectronAPI {
   onFileDrop: (callback: (filePath: string) => void) => () => void;
   onMenuSave: (callback: () => void) => () => void;
   onMenuLoad: (callback: () => void) => () => void;
-  saveProject: (state: { projectName: string; grids: any; }) => Promise<{ success: boolean; path?: string }>;
-  loadProject: (name?: string) => Promise<{ success: boolean; data?: any }>; // Allow optional project name
+  saveProject: (state: { projectName: string; grids: any; descriptions: Record<string, string> }) => Promise<{ success: boolean; path?: string }>;
+  loadProject: (name?: string) => Promise<{ success: boolean; data?: { projectName: string; grids: any; descriptions: Record<string, string> } }>; // Allow optional project name
   copyImage: (projectName: string, sourcePath: string, customFileName: string) => Promise<{ success: boolean; path?: string; error?: string }>;
+  copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
 }
 
 declare global {

@@ -62,7 +62,7 @@ const createWindow = () => {
   }
 
   // IPC handler to save project state
-  ipcMain.handle('save-project', async (event, state: { projectName: string; grids: Record<string, (string | null)[]> }) => {
+  ipcMain.handle('save-project', async (event, state: { projectName: string; grids: Record<string, (string | null)[]>; descriptions: Record<string, string> }) => {
     const projectPath = path.join(loraDataRoot, state.projectName);
     if (!fs.existsSync(projectPath)) {
       fs.mkdirSync(projectPath, { recursive: true });
@@ -71,6 +71,7 @@ const createWindow = () => {
     const stateToSave = {
       projectName: state.projectName,
       grids: { ...state.grids },
+      descriptions: { ...state.descriptions }, // Include descriptions in the saved state
     };
 
     // Convert absolute file URLs back to relative paths for saving

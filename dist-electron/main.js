@@ -70,6 +70,7 @@ const createWindow = () => {
         const stateToSave = {
             projectName: state.projectName,
             grids: { ...state.grids },
+            descriptions: { ...state.descriptions }, // Include descriptions in the saved state
         };
         // Convert absolute file URLs back to relative paths for saving
         for (const section in stateToSave.grids) {

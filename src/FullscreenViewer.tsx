@@ -1,13 +1,6 @@
 import React, { useEffect } from 'react';
 import { FullscreenViewerProps } from './types';
 
-interface FullscreenViewerProps {
-  image: string;
-  onClose: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-}
-
 const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev }) => {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {

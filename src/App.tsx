@@ -26,6 +26,15 @@ const App: React.FC = () => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
+  const [activeTab, setActiveTab] = useState<'images' | 'descriptions'>('images');
+  const [descriptions, setDescriptions] = useState({
+    notes: '',
+    faceImageDescription: '',
+    clothesImageDescription: '',
+    fullBodyClothesDescription: '',
+    environmentDescription: '',
+  });
+  const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   
   // Use a ref to hold the latest state for use in event handlers
   // This avoids stale closures without needing to re-register listeners
@@ -35,31 +44,56 @@ const App: React.FC = () => {
   // Use a ref for the drop target to avoid re-renders on dragover
   const dropTargetRef = useRef<{ section: string; index: number } | null>(null);
 
+  // Define loadProjectData before its usage
+  const loadProjectData = async (projectName?: string) => {
+    console.log('loadProjectData called with projectName:', projectName); // Debug log
+    const result = await window.electronAPI.loadProject(projectName);
+    if (result.success && result.data) {
+      console.log('Loaded project data:', result.data); // Debug log
+      setProjectName(result.data.projectName);
+
+      const loadedDescriptions = {
+        notes: result.data.descriptions?.notes || '',
+        faceImageDescription: result.data.descriptions?.faceImageDescription || '',
+        clothesImageDescription: result.data.descriptions?.clothesImageDescription || '',
+        fullBodyClothesDescription: result.data.descriptions?.fullBodyClothesDescription || '',
+        environmentDescription: result.data.descriptions?.environmentDescription || '',
+      };
+      console.log('Loaded descriptions:', loadedDescriptions); // Debug log
+      setDescriptions(loadedDescriptions);
+
+      const absolutePathGrids = { ...result.data.grids };
+      for (const section in absolutePathGrids) {
+        absolutePathGrids[section] = absolutePathGrids[section].map((imagePath: string | null) => {
+          if (imagePath && !imagePath.startsWith('file://')) {
+            return `file://${imagePath.replace(/\\/g, '/')}`;
+          }
+          return imagePath;
+        });
+      }
+      setGrids(absolutePathGrids);
+      setIsProjectLoaded(true); // Mark project as loaded
+    } else {
+      console.error('Failed to load project:', result);
+    }
+  };
+
   useEffect(() => {
     // These handlers now read from the ref, so they always have the latest state
     const handleSave = async () => {
-      const result = await window.electronAPI.saveProject(stateRef.current);
+      const result = await window.electronAPI.saveProject({
+        projectName,
+        grids,
+        descriptions, // Include descriptions in the saved state
+      });
       if (result.success) {
         console.log('Project saved to', result.path);
       }
     };
   
     const handleLoad = async () => {
-      const result = await window.electronAPI.loadProject();
-      if (result.success && result.data) {
-        setProjectName(result.data.projectName);
-        // The loaded paths are now absolute, so we can use them directly
-        const absolutePathGrids = { ...result.data.grids };
-        for (const section in absolutePathGrids) {
-          absolutePathGrids[section] = absolutePathGrids[section].map((imagePath: string | null) => {
-            if (imagePath && !imagePath.startsWith('file://')) {
-              return `file://${imagePath.replace(/\\/g, '/')}`;
-            }
-            return imagePath;
-          });
-        }
-        setGrids(absolutePathGrids);
-      }
+      console.log('handleLoad called'); // Debug log
+      await loadProjectData();
     };
 
     const handleGlobalDrop = async (filePath: string) => {
@@ -88,6 +122,7 @@ const App: React.FC = () => {
             const stateToSave = {
               projectName: currentProjectName,
               grids: newGrids,
+              descriptions, // Include descriptions in the saved state
             };
             window.electronAPI.saveProject(stateToSave);
 
@@ -130,7 +165,7 @@ const App: React.FC = () => {
         removeDropListener();
         window.removeEventListener('dragover', dragOverHandler);
     }
-  }, []); // Empty dependency array means this effect runs only once
+  }, [projectName, grids, descriptions]); // Empty dependency array means this effect runs only once
 
   const handleDropImage = (section: string, slotIndex: number, filePath: string) => {
     setGrids((prevGrids) => {
@@ -179,30 +214,46 @@ const App: React.FC = () => {
   };
 
   const handleLoadProject = async (name: string) => {
-    setProjectName(name);
     setCurrentPage('project');
-
-    // Fetch the project data using the project name
-    const result = await window.electronAPI.loadProject(name); // Pass the project name
-    if (result.success && result.data) {
-        const absolutePathGrids = { ...result.data.grids };
-        for (const section in absolutePathGrids) {
-            absolutePathGrids[section] = absolutePathGrids[section].map((imagePath: string | null) => {
-                if (imagePath && !imagePath.startsWith('file://')) {
-                    return `file://${imagePath.replace(/\\/g, '/')}`;
-                }
-                return imagePath;
-            });
-        }
-        setGrids(absolutePathGrids);
-    }
-};
+    await loadProjectData(name);
+  };
 
   const handleGoToLanding = () => {
     setCurrentPage('landing');
     setProjectName('');
     setGrids(initialGrids);
   };
+
+  const handleDescriptionChange = (field: keyof typeof descriptions, value: string) => {
+    setDescriptions((prev) => {
+      const updatedDescriptions = { ...prev, [field]: value };
+
+      // Auto-save the project with the updated descriptions
+      const stateToSave = {
+        projectName,
+        grids,
+        descriptions: updatedDescriptions,
+      };
+      window.electronAPI.saveProject(stateToSave);
+
+      return updatedDescriptions;
+    });
+  };
+
+  const saveProject = () => {
+    if (!isProjectLoaded) return; // Prevent saving before project is loaded
+
+    const stateToSave = {
+      projectName,
+      grids,
+      descriptions,
+    };
+    window.electronAPI.saveProject(stateToSave);
+  };
+
+  useEffect(() => {
+    console.log('Descriptions state updated in useEffect:', descriptions); // Debug log to trace state updates
+  }, [descriptions]);
 
   if (currentPage === 'landing') {
     return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
@@ -211,41 +262,80 @@ const App: React.FC = () => {
   return (
     <div className="p-8">
       <h1 className="text-4xl font-bold mb-4">Face Lora DataSet Manager</h1>
-      <div className="mb-8">
-        <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
-        <input
-          type="text"
-          id="projectName"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
-        />
+
+      <div className="mb-4">
+        <button
+          onClick={() => setActiveTab('images')}
+          className={`px-4 py-2 rounded-lg ${activeTab === 'images' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
+        >
+          Images
+        </button>
+        <button
+          onClick={() => setActiveTab('descriptions')}
+          className={`ml-2 px-4 py-2 rounded-lg ${activeTab === 'descriptions' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
+        >
+          Descriptions
+        </button>
       </div>
 
-      <button
-        onClick={handleGoToLanding}
-        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mb-8"
-      >
-        Back to Landing Page
-      </button>
+      {activeTab === 'images' ? (
+        <>
+          <div className="mb-8">
+            <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
+            <input
+              type="text"
+              id="projectName"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+            />
+          </div>
 
-      {Object.entries(grids).map(([title, images]) => (
-        <div key={title} data-section-title={title}>
-          <GridSection
-            title={title}
-            cols={gridConfigs[title].cols}
-            images={images}
-            onDropImage={(slotIndex, filePath) => handleDropImage(title, slotIndex, filePath)}
-            onClickImage={handleClickImage}
+          <button
+            onClick={handleGoToLanding}
+            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mb-8"
+          >
+            Back to Landing Page
+          </button>
+
+          {Object.entries(grids).map(([title, images]) => (
+            <div key={title} data-section-title={title}>
+              <GridSection
+                title={title}
+                cols={gridConfigs[title].cols}
+                images={images}
+                onDropImage={(slotIndex, filePath) => handleDropImage(title, slotIndex, filePath)}
+                onClickImage={handleClickImage}
+              />
+            </div>
+          ))}
+          <FullscreenViewer 
+            image={fullscreenImage || ''} 
+            onClose={handleCloseFullscreen}
+            onNext={handleNextImage}
+            onPrev={handlePrevImage}
           />
+        </>
+      ) : (
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Descriptions</h2>
+          {Object.entries(descriptions).map(([key, value]) => (
+            <div key={key} className="mb-4">
+              <label htmlFor={key} className="block text-lg font-medium mb-2">
+                {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
+              </label>
+              <textarea
+                id={key}
+                value={descriptions[key as keyof typeof descriptions] || ''} // Debug log
+                onChange={(e) => handleDescriptionChange(key as keyof typeof descriptions, e.target.value)}
+                onBlur={() => saveProject()}
+                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+                rows={4}
+              />
+            </div>
+          ))}
         </div>
-      ))}
-      <FullscreenViewer 
-        image={fullscreenImage} 
-        onClose={handleCloseFullscreen}
-        onNext={handleNextImage}
-        onPrev={handlePrevImage}
-      />
+      )}
     </div>
   );
 };
@@ -253,16 +343,16 @@ const App: React.FC = () => {
 export default App;
 
 declare global {
-    interface Window {
-      electronAPI: {
-        onFileDrop: (callback: (filePath: string) => void) => () => void;
-        onMenuSave: (callback: () => void) => () => void;
-        onMenuLoad: (callback: () => void) => () => void;
-        saveProject: (state: { projectName: string; grids: any }) => Promise<{ success: boolean; path?: string }>;
-        loadProject: (name?: string) => Promise<{ success: boolean; data?: any }>; // Allow optional project name
-        copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
-        getProjects: () => Promise<string[]>;
-        copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
-      };
-    }
+  interface Window {
+    electronAPI: {
+      onFileDrop: (callback: (filePath: string) => void) => () => void;
+      onMenuSave: (callback: () => void) => () => void;
+      onMenuLoad: (callback: () => void) => () => void;
+      saveProject: (state: { projectName: string; grids: any; descriptions: Record<string, string> }) => Promise<{ success: boolean; path?: string }>;
+      loadProject: (name?: string) => Promise<{ success: boolean; data?: { projectName: string; grids: any; descriptions: Record<string, string> } }>; // Allow optional project name
+      copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
+      getProjects: () => Promise<string[]>;
+      copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
+    };
+  }
 }
