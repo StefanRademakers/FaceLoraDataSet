@@ -9,4 +9,6 @@ export interface GridSectionProps {
 export interface FullscreenViewerProps {
   image: string | null;
   onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
 }

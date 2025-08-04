@@ -24,6 +24,8 @@ const App: React.FC = () => {
   const [projectName, setProjectName] = useState('');
   const [grids, setGrids] = useState(initialGrids);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+  const [allImages, setAllImages] = useState<string[]>([]);
+  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
   
   // Use a ref to hold the latest state for use in event handlers
   // This avoids stale closures without needing to re-register listeners
@@ -141,12 +143,34 @@ const App: React.FC = () => {
   };
 
   const handleClickImage = (imagePath: string) => {
-    console.log("Clicked image path:", imagePath); // Debug log
-    setFullscreenImage(imagePath); // Directly use the image path
+    const flatImages = Object.values(grids).flat().filter((img): img is string => img !== null);
+    const index = flatImages.findIndex(img => img === imagePath);
+
+    setAllImages(flatImages);
+    setCurrentImageIndex(index);
+    setFullscreenImage(imagePath);
   };
 
   const handleCloseFullscreen = () => {
     setFullscreenImage(null);
+    setAllImages([]);
+    setCurrentImageIndex(null);
+  };
+
+  const handleNextImage = () => {
+    if (allImages.length > 0 && currentImageIndex !== null) {
+      const nextIndex = (currentImageIndex + 1) % allImages.length;
+      setCurrentImageIndex(nextIndex);
+      setFullscreenImage(allImages[nextIndex]);
+    }
+  };
+
+  const handlePrevImage = () => {
+    if (allImages.length > 0 && currentImageIndex !== null) {
+      const prevIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
+      setCurrentImageIndex(prevIndex);
+      setFullscreenImage(allImages[prevIndex]);
+    }
   };
 
   const handleCreateProject = (name: string) => {
@@ -216,7 +240,12 @@ const App: React.FC = () => {
           />
         </div>
       ))}
-      <FullscreenViewer image={fullscreenImage} onClose={handleCloseFullscreen} />
+      <FullscreenViewer 
+        image={fullscreenImage} 
+        onClose={handleCloseFullscreen}
+        onNext={handleNextImage}
+        onPrev={handlePrevImage}
+      />
     </div>
   );
 };
