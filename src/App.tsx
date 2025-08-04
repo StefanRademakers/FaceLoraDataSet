@@ -81,6 +81,14 @@ const App: React.FC = () => {
             const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}` : '';
             newImages[index] = finalUrl; // Replace the image at the current index
             newGrids[section] = newImages;
+
+            // Auto-save the project with the new state
+            const stateToSave = {
+              projectName: currentProjectName,
+              grids: newGrids,
+            };
+            window.electronAPI.saveProject(stateToSave);
+
             return newGrids;
           });
         } else {
