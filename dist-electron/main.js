@@ -13,8 +13,8 @@ if (require('electron-squirrel-startup')) {
 }
 const createWindow = () => {
     const win = new electron_1.BrowserWindow({
-        width: 1700,
-        height: 900,
+        width: 1830,
+        height: 1000,
         webPreferences: {
             preload: path_1.default.join(__dirname, 'preload.js'),
             contextIsolation: true,

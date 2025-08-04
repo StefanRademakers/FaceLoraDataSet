@@ -78,7 +78,7 @@ const App: React.FC = () => {
           setGrids((prevGrids) => {
             const newGrids = { ...prevGrids };
             const newImages = [...(newGrids[section] || [])];
-            const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}` : '';
+            const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}?t=${new Date().getTime()}` : '';
             newImages[index] = finalUrl; // Replace the image at the current index
             newGrids[section] = newImages;
 
@@ -174,6 +174,12 @@ const App: React.FC = () => {
     }
 };
 
+  const handleGoToLanding = () => {
+    setCurrentPage('landing');
+    setProjectName('');
+    setGrids(initialGrids);
+  };
+
   if (currentPage === 'landing') {
     return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
   }
@@ -191,6 +197,13 @@ const App: React.FC = () => {
           className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
         />
       </div>
+
+      <button
+        onClick={handleGoToLanding}
+        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mb-8"
+      >
+        Back to Landing Page
+      </button>
 
       {Object.entries(grids).map(([title, images]) => (
         <div key={title} data-section-title={title}>
