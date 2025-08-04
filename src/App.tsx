@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import LandingPage from './LandingPage';
 import GridSection from './GridSection';
 import FullscreenViewer from './FullscreenViewer';
 
@@ -19,7 +20,8 @@ const gridConfigs: Record<string, { cols: number }> = {
 };
 
 const App: React.FC = () => {
-  const [projectName, setProjectName] = useState('New Project');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'project'>('landing');
+  const [projectName, setProjectName] = useState('');
   const [grids, setGrids] = useState(initialGrids);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   
@@ -139,6 +141,20 @@ const App: React.FC = () => {
     setFullscreenImage(null);
   };
 
+  const handleCreateProject = (name: string) => {
+    setProjectName(name);
+    setCurrentPage('project');
+  };
+
+  const handleLoadProject = (name: string) => {
+    setProjectName(name);
+    setCurrentPage('project');
+  };
+
+  if (currentPage === 'landing') {
+    return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
+  }
+
   return (
     <div className="p-8">
       <h1 className="text-4xl font-bold mb-4">Face Lora DataSet Manager</h1>
@@ -155,13 +171,13 @@ const App: React.FC = () => {
 
       {Object.entries(grids).map(([title, images]) => (
         <div key={title} data-section-title={title}>
-            <GridSection
+          <GridSection
             title={title}
             cols={gridConfigs[title].cols}
             images={images}
             onDropImage={(slotIndex, filePath) => handleDropImage(title, slotIndex, filePath)}
             onClickImage={handleClickImage}
-            />
+          />
         </div>
       ))}
       <FullscreenViewer image={fullscreenImage} onClose={handleCloseFullscreen} />
@@ -180,6 +196,7 @@ declare global {
         saveProject: (state: { projectName: string; grids: any }) => Promise<{ success: boolean; path?: string }>;
         loadProject: () => Promise<{ success: boolean; data?: any }>;
         copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
+        getProjects: () => Promise<string[]>;
       };
     }
 }

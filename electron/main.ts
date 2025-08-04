@@ -148,6 +148,20 @@ const createWindow = () => {
       return { success: false, error: message };
     }
   });
+
+  // IPC handler to fetch the list of projects
+  ipcMain.handle('get-projects', async () => {
+    try {
+      const projects = fs.readdirSync(loraDataRoot).filter((item) => {
+        const itemPath = path.join(loraDataRoot, item);
+        return fs.statSync(itemPath).isDirectory();
+      });
+      return projects;
+    } catch (error) {
+      console.error('Failed to fetch projects:', error);
+      return [];
+    }
+  });
 };
 
 app.on('ready', createWindow);
@@ -157,6 +171,7 @@ app.on('window-all-closed', () => {
   ipcMain.removeHandler('save-project');
   ipcMain.removeHandler('load-project');
   ipcMain.removeHandler('copy-image');
+  ipcMain.removeHandler('get-projects');
   if (process.platform !== 'darwin') {
     app.quit();
   }
