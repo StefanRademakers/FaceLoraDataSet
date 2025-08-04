@@ -26,7 +26,7 @@ const App: React.FC = () => {
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'images' | 'descriptions'>('images');
+  const [activeTab, setActiveTab] = useState<'images' | 'descriptions' | 'export'>('images');
   const [descriptions, setDescriptions] = useState({
     notes: '',
     faceImageDescription: '',
@@ -255,6 +255,16 @@ const App: React.FC = () => {
     console.log('Descriptions state updated in useEffect:', descriptions); // Debug log to trace state updates
   }, [descriptions]);
 
+  const handleExportToPDF = () => {
+    console.log('Export to PDF triggered');
+    // Add logic to export project to PDF
+  };
+
+  const handleExportToZip = () => {
+    console.log('Export to Zip triggered');
+    // Add logic to export project to Zip
+  };
+
   if (currentPage === 'landing') {
     return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
   }
@@ -275,6 +285,12 @@ const App: React.FC = () => {
           className={`ml-2 px-4 py-2 rounded-lg ${activeTab === 'descriptions' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
         >
           Descriptions
+        </button>
+        <button
+          onClick={() => setActiveTab('export')}
+          className={`ml-2 px-4 py-2 rounded-lg ${activeTab === 'export' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
+        >
+          Export
         </button>
       </div>
 
@@ -316,7 +332,7 @@ const App: React.FC = () => {
             onPrev={handlePrevImage}
           />
         </>
-      ) : (
+      ) : activeTab === 'descriptions' ? (
         <div>
           <h2 className="text-2xl font-bold mb-4">Descriptions</h2>
           {Object.entries(descriptions).map(([key, value]) => (
@@ -334,6 +350,22 @@ const App: React.FC = () => {
               />
             </div>
           ))}
+        </div>
+      ) : (
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Export Options</h2>
+          <button
+            onClick={handleExportToPDF}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-4"
+          >
+            Export to PDF
+          </button>
+          <button
+            onClick={handleExportToZip}
+            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+          >
+            Export to Zip
+          </button>
         </div>
       )}
     </div>
