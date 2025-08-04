@@ -68,3 +68,21 @@ npm run build
 ```
 
 This will create a `dist` folder with the built React app and a `dist-electron` folder with the compiled Electron main process code. You can then use a tool like `electron-builder` to package it for your desired platform.
+
+## Building the Application with an Installer
+
+To build the application for distribution, including an installer and app icon, follow these steps:
+
+1. Ensure you have placed your `.ico` file in the `assets` directory (e.g., `assets/icon.ico`).
+2. Run the following command in the terminal:
+
+   ```bash
+   npm run build; npx electron-builder --win
+   ```
+
+   This will:
+   - Build the React application.
+   - Compile the Electron main process.
+   - Package the application into a distributable format for Windows, including an installer.
+
+3. The output will be located in the `dist` directory.

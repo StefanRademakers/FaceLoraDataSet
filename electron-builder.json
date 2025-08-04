@@ -1,0 +1,16 @@
+{
+  "appId": "com.mediavibe.facelora",
+  "productName": "Mediavibe Face Lora DataSet",
+  "directories": {
+    "output": "dist",
+    "buildResources": "assets"
+  },
+  "files": [
+    "dist-electron/**/*",
+    "dist/**/*",
+    "assets/icon.ico"
+  ],
+  "win": {
+    "icon": "assets/icon.ico"
+  }
+}
