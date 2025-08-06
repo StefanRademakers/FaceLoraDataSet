@@ -265,6 +265,22 @@ const App: React.FC = () => {
     // Add logic to export project to Zip
   };
 
+  const handleDeleteImage = (imagePath: string) => {
+    setGrids((prevGrids) => {
+      const newGrids = { ...prevGrids };
+      for (const section in newGrids) {
+        const imageIndex = newGrids[section].findIndex((img) => img === imagePath);
+        if (imageIndex !== -1) {
+          newGrids[section][imageIndex] = null;
+          break;
+        }
+      }
+      return newGrids;
+    });
+    // Also remove from the fullscreen image list
+    setAllImages((prevImages) => prevImages.filter((img) => img !== imagePath));
+  };
+
   if (currentPage === 'landing') {
     return <LandingPage onCreateProject={handleCreateProject} onLoadProject={handleLoadProject} />;
   }
@@ -330,6 +346,7 @@ const App: React.FC = () => {
             onClose={handleCloseFullscreen}
             onNext={handleNextImage}
             onPrev={handlePrevImage}
+            onDeleteImage={handleDeleteImage}
           />
         </>
       ) : activeTab === 'descriptions' ? (
@@ -385,6 +402,7 @@ declare global {
       copyImage: (projectName: string, sourcePath: string, newFileName: string) => Promise<{ success: boolean; path?: string, error?: string }>;
       getProjects: () => Promise<string[]>;
       copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
+      openImageInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
     };
   }
 }

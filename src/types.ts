@@ -11,4 +11,5 @@ export interface FullscreenViewerProps {
   onClose: () => void;
   onNext: () => void;
   onPrev: () => void;
+  onDeleteImage: (imagePath: string) => void;
 }

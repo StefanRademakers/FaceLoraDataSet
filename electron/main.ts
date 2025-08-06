@@ -213,6 +213,44 @@ const createWindow = () => {
       return { success: false, error: message };
     }
   });
+
+  // IPC handler to open an image in the file explorer
+  ipcMain.handle('open-image-in-explorer', async (_, filePath) => {
+    try {
+      const { shell } = require('electron');
+      await shell.showItemInFolder(filePath);
+      return { success: true };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Failed to open image in explorer:', error);
+      return { success: false, error: message };
+    }
+  });
+
+  // IPC handler to delete an image file
+  ipcMain.handle('delete-image', async (_, fileUrl) => {
+    try {
+      const { fileURLToPath } = require('url');
+      const filePath = fileURLToPath(fileUrl);
+
+      // Strip query parameters from the file path
+      const sanitizedPath = filePath.split('?')[0];
+
+      // Check if the file exists before attempting to delete
+      if (fs.existsSync(sanitizedPath)) {
+        fs.unlinkSync(sanitizedPath);
+        console.log('File deleted:', sanitizedPath);
+        return { success: true };
+      } else {
+        console.error('File does not exist:', sanitizedPath);
+        return { success: false, error: 'File does not exist.' };
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      console.error('Failed to delete file:', error);
+      return { success: false, error: message };
+    }
+  });
 };
 
 app.on('ready', createWindow);
@@ -224,6 +262,8 @@ app.on('window-all-closed', () => {
   ipcMain.removeHandler('copy-image');
   ipcMain.removeHandler('get-projects');
   ipcMain.removeHandler('copy-image-to-clipboard');
+  ipcMain.removeHandler('open-image-in-explorer');
+  ipcMain.removeHandler('delete-image');
   if (process.platform !== 'darwin') {
     app.quit();
   }

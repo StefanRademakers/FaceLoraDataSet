@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { FullscreenViewerProps } from './types';
 
-const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev }) => {
+const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev, onDeleteImage }) => {
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight') {
@@ -10,6 +10,16 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
         onPrev();
       } else if (e.key === 'Escape') {
         onClose();
+      } else if (e.key === 'Enter') {
+        // open the image in the file explorer and select it
+        if (image) {
+          const result = await window.electronAPI.openImageInExplorer(image);
+          if (result.success) {
+            console.log('Image opened in explorer');
+          } else {
+            console.error('Failed to open image in explorer:', result.error);
+          }
+        }
       } else if (e.ctrlKey && e.key === 'c' && image) {
         e.preventDefault(); // Prevent default copy behavior
         const result = await window.electronAPI.copyImageToClipboard(image);
@@ -18,6 +28,19 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
         } else {
           console.error('Failed to copy image:', result.error);
         }
+      } else if (e.key === 'Delete' && image) {
+        const userConfirmed = window.confirm('Are you sure you want to delete this image?');
+        if (userConfirmed) {
+          const result = await window.electronAPI.deleteImage(image);
+          if (result.success) {
+            console.log('Image deleted from filesystem:', image);
+            onDeleteImage(image); // Call the onDeleteImage prop
+            onClose(); // Close the fullscreen viewer
+          } else {
+            console.error('Failed to delete image:', result.error);
+            console.error('File path:', image);
+          }
+        }
       }
     };
 
@@ -25,7 +48,7 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onNext, onPrev, onClose, image]);
+  }, [onNext, onPrev, onClose, image, onDeleteImage]);
 
   if (!image) return null;
 
