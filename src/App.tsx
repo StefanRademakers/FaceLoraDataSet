@@ -33,6 +33,7 @@ const App: React.FC = () => {
     clothesImageDescription: '',
     fullBodyClothesDescription: '',
     environmentDescription: '',
+    loraTrigger: '',
   });
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
   
@@ -58,6 +59,7 @@ const App: React.FC = () => {
         clothesImageDescription: result.data.descriptions?.clothesImageDescription || '',
         fullBodyClothesDescription: result.data.descriptions?.fullBodyClothesDescription || '',
         environmentDescription: result.data.descriptions?.environmentDescription || '',
+        loraTrigger: result.data.descriptions?.loraTrigger || '',
       };
       console.log('Loaded descriptions:', loadedDescriptions); // Debug log
       setDescriptions(loadedDescriptions);
@@ -275,6 +277,14 @@ const App: React.FC = () => {
           break;
         }
       }
+
+      const stateToSave = {
+        projectName,
+        grids: newGrids,
+        descriptions,
+      };
+      window.electronAPI.saveProject(stateToSave);
+
       return newGrids;
     });
     // Also remove from the fullscreen image list
@@ -318,15 +328,28 @@ const App: React.FC = () => {
 
       {activeTab === 'images' ? (
         <>
-          <div className="mb-8">
-            <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
-            <input
-              type="text"
-              id="projectName"
-              value={projectName}
-              onChange={(e) => setProjectName(e.target.value)}
-              className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
-            />
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <div>
+              <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
+              <input
+                type="text"
+                id="projectName"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+              />
+            </div>
+            <div>
+              <label htmlFor="loraTrigger" className="block text-lg font-medium mb-2">Lora Trigger</label>
+              <input
+                type="text"
+                id="loraTrigger"
+                value={descriptions.loraTrigger}
+                onChange={(e) => handleDescriptionChange('loraTrigger', e.target.value)}
+                onBlur={() => saveProject()}
+                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+              />
+            </div>
           </div>
 
           {Object.entries(grids).map(([title, images]) => (
