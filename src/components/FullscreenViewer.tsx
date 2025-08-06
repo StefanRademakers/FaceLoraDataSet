@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { FullscreenViewerProps } from './types';
+import { FullscreenViewerProps } from '../interfaces/types';
 
 const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev, onDeleteImage }) => {
   useEffect(() => {
