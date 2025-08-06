@@ -1,4 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
+import SettingsIcon from '@mui/icons-material/Settings';
 
 interface LandingPageProps {
   onCreateProject: (projectName: string) => void;
@@ -24,49 +36,63 @@ const LandingPage: React.FC<LandingPageProps> = ({ onCreateProject, onLoadProjec
   };
 
   return (
-    <div className="p-8">
-      <div className="flex justify-end mb-4">
-        <button
-          onClick={onOpenSettings}
-          className="bg-gray-700 text-white rounded-lg px-4 py-2 hover:bg-gray-600"
-        >
-          Settings
-        </button>
-      </div>
-
-      <div className="mb-8">
-        <label htmlFor="projectName" className="block text-lg font-medium mb-2">New Project:</label>
-        <input
-          type="text"
-          id="projectName"
-          value={projectName}
-          onChange={(e) => setProjectName(e.target.value)}
-          className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2 mb-4"
-        />
-        <button
-          onClick={handleCreateProject}
-          className="bg-blue-600 text-white rounded-lg px-4 py-2"
-        >
-          Create Project
-        </button>
-      </div>
-
-      <div>
-        <h2 className="text-2xl font-bold mb-4">Load Existing Project:</h2>
-        <ul className="list-disc pl-5">
-          {existingProjects.map((project) => (
-            <li key={project} className="mb-2">
-              <button
-                onClick={() => onLoadProject(project)}
-                className="text-blue-400 hover:underline"
-              >
-                {project}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
-    </div>
+    <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper elevation={6} sx={{ width: '100%', p: 4, bgcolor: '#23272b', borderRadius: 3 }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
+          <Tooltip title="Settings">
+            <IconButton onClick={onOpenSettings} color="primary" size="large" sx={{ bgcolor: '#222', '&:hover': { bgcolor: '#333' } }}>
+              <SettingsIcon />
+            </IconButton>
+          </Tooltip>
+        </div>
+        <Typography variant="h4" component="h1" gutterBottom align="center" sx={{ color: 'white', fontWeight: 700 }}>
+          FaceLora Dataset Manager
+        </Typography>
+        <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#282c34', borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+            New Project
+          </Typography>
+          <TextField
+            fullWidth
+            label="Project Name"
+            variant="outlined"
+            value={projectName}
+            onChange={(e) => setProjectName(e.target.value)}
+            sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' }, '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } } }}
+            InputLabelProps={{ style: { color: '#90caf9' } }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+            onClick={handleCreateProject}
+            sx={{ fontWeight: 600 }}
+          >
+            Create Project
+          </Button>
+        </Paper>
+        <Paper elevation={2} sx={{ p: 3, bgcolor: '#282c34', borderRadius: 2 }}>
+          <Typography variant="h6" sx={{ color: 'white', mb: 2 }}>
+            Load Existing Project
+          </Typography>
+          <List>
+            {existingProjects.length === 0 ? (
+              <Typography variant="body2" sx={{ color: '#aaa', textAlign: 'center' }}>
+                No projects found.
+              </Typography>
+            ) : (
+              existingProjects.map((project) => (
+                <ListItem key={project} disablePadding>
+                  <ListItemButton onClick={() => onLoadProject(project)} sx={{ borderRadius: 1 }}>
+                    <ListItemText primary={project} primaryTypographyProps={{ sx: { color: '#90caf9', fontWeight: 500 } }} />
+                  </ListItemButton>
+                </ListItem>
+              ))
+            )}
+          </List>
+        </Paper>
+      </Paper>
+    </Container>
   );
 };
 

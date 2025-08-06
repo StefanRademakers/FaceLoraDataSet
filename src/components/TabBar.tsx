@@ -1,4 +1,11 @@
 import React from 'react';
+import Tabs from '@mui/material/Tabs';
+import Tab from '@mui/material/Tab';
+import IconButton from '@mui/material/IconButton';
+import HomeIcon from '@mui/icons-material/Home';
+import PhotoLibraryIcon from '@mui/icons-material/PhotoLibrary';
+import DescriptionIcon from '@mui/icons-material/Description';
+import ArchiveIcon from '@mui/icons-material/Archive';
 
 interface TabBarProps {
   activeTab: 'images' | 'descriptions' | 'export';
@@ -7,32 +14,23 @@ interface TabBarProps {
 }
 
 const TabBar: React.FC<TabBarProps> = ({ activeTab, setActiveTab, onGoToLanding }) => {
+  const tabIndex = ['images', 'descriptions', 'export'].indexOf(activeTab);
   return (
-    <div className="mb-4">
-      <button
-        onClick={onGoToLanding}
-        className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mr-2"
+    <div className="mb-4 flex items-center" style={{ background: '#222', borderRadius: 8, padding: 8 }}>
+      <IconButton onClick={onGoToLanding} sx={{ color: '#90caf9', mr: 2 }}>
+        <HomeIcon />
+      </IconButton>
+      <Tabs
+        value={tabIndex}
+        onChange={(_, idx) => setActiveTab(['images', 'descriptions', 'export'][idx] as any)}
+        textColor="inherit"
+        TabIndicatorProps={{ style: { background: '#90caf9' } }}
+        sx={{ minHeight: 0 }}
       >
-        Home
-      </button>
-      <button
-        onClick={() => setActiveTab('images')}
-        className={`px-4 py-2 rounded-lg ${activeTab === 'images' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
-      >
-        Images
-      </button>
-      <button
-        onClick={() => setActiveTab('descriptions')}
-        className={`ml-2 px-4 py-2 rounded-lg ${activeTab === 'descriptions' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
-      >
-        Descriptions
-      </button>
-      <button
-        onClick={() => setActiveTab('export')}
-        className={`ml-2 px-4 py-2 rounded-lg ${activeTab === 'export' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
-      >
-        Export
-      </button>
+        <Tab icon={<PhotoLibraryIcon />} iconPosition="start" label="images" sx={{ color: 'white', minHeight: 0, textTransform: 'lowercase', fontSize: 16, fontWeight: 500 }} />
+        <Tab icon={<DescriptionIcon />} iconPosition="start" label="descriptions" sx={{ color: 'white', minHeight: 0, textTransform: 'lowercase', fontSize: 16, fontWeight: 500 }} />
+        <Tab icon={<ArchiveIcon />} iconPosition="start" label="export" sx={{ color: 'white', minHeight: 0, textTransform: 'lowercase', fontSize: 16, fontWeight: 500 }} />
+      </Tabs>
     </div>
   );
 };

@@ -4,6 +4,8 @@ import FullscreenViewer from '../components/FullscreenViewer';
 import TabBar from '../components/TabBar';
 import Descriptions from '../components/Descriptions';
 import { ImageSlot } from '../interfaces/types';
+import Switch from '@mui/material/Switch';
+import FormControlLabel from '@mui/material/FormControlLabel';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -295,95 +297,103 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
   };
 
   return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold mb-4">Face Lora DataSet Manager</h1>
-
-      <TabBar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        onGoToLanding={onGoToLanding}
-      />
-
-      <div className="mb-4">
-        <button
-          onClick={() => setShowCaptions(!showCaptions)}
-          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
-        >
-          {showCaptions ? 'Hide' : 'Show'} Captions
-        </button>
-      </div>
-
-      {activeTab === 'images' ? (
-        <>
-          <div className="grid grid-cols-2 gap-4 mb-8">
-            <div>
-              <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
-              <input
-                type="text"
-                id="projectName"
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
-              />
-            </div>
-            <div>
-              <label htmlFor="loraTrigger" className="block text-lg font-medium mb-2">Lora Trigger</label>
-              <input
-                type="text"
-                id="loraTrigger"
-                value={descriptions.loraTrigger}
-                onChange={(e) => handleDescriptionChange('loraTrigger', e.target.value)}
-                onBlur={() => saveProject()}
-                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
-              />
-            </div>
-          </div>
-
-          {Object.entries(grids).map(([title, images]) => (
-            <div key={title} data-section-title={title}>
-              <GridSection
-                title={title}
-                cols={gridConfigs[title].cols}
-                images={images}
-                onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
-                onClickImage={handleClickImage}
-                onCaptionChange={(index, caption) => handleCaptionChange(title, index, caption)}
-                showCaptions={showCaptions}
-              />
-            </div>
-          ))}
-          <FullscreenViewer 
-            image={fullscreenImage || ''} 
-            onClose={handleCloseFullscreen}
-            onNext={handleNextImage}
-            onPrev={handlePrevImage}
-            onDeleteImage={handleDeleteImage}
-          />
-        </>
-      ) : activeTab === 'descriptions' ? (
-        <Descriptions
-          descriptions={descriptions}
-          onDescriptionChange={handleDescriptionChange}
-          onBlur={saveProject}
+    <>
+      <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#222', paddingTop: 0 }}>
+        <TabBar
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onGoToLanding={onGoToLanding}
         />
-      ) : (
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Export Options</h2>
-          <button
-            onClick={handleExportToPDF}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-4"
-          >
-            Export to PDF
-          </button>
-          <button
-            onClick={handleExportToZip}
-            className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
-          >
-            Export to Zip
-          </button>
+      </div>
+      <div className="p-8">
+        <div className="mb-4">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showCaptions}
+                onChange={() => setShowCaptions(!showCaptions)}
+                color="primary"
+              />
+            }
+            label="Show Captions"
+            sx={{
+              color: 'white',
+              '.MuiSwitch-thumb': { backgroundColor: '#90caf9' },
+              '.MuiSwitch-track': { backgroundColor: '#424242' }
+            }}
+          />
         </div>
-      )}
-    </div>
+        {activeTab === 'images' ? (
+          <>
+            <div className="grid grid-cols-2 gap-4 mb-8">
+              <div>
+                <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
+                <input
+                  type="text"
+                  id="projectName"
+                  value={projectName}
+                  onChange={(e) => setProjectName(e.target.value)}
+                  className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+                />
+              </div>
+              <div>
+                <label htmlFor="loraTrigger" className="block text-lg font-medium mb-2">Lora Trigger</label>
+                <input
+                  type="text"
+                  id="loraTrigger"
+                  value={descriptions.loraTrigger}
+                  onChange={(e) => handleDescriptionChange('loraTrigger', e.target.value)}
+                  onBlur={() => saveProject()}
+                  className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+                />
+              </div>
+            </div>
+            {Object.entries(grids).map(([title, images]) => (
+              <div key={title} data-section-title={title}>
+                <GridSection
+                  title={title}
+                  cols={gridConfigs[title].cols}
+                  images={images}
+                  onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
+                  onClickImage={handleClickImage}
+                  onCaptionChange={(index, caption) => handleCaptionChange(title, index, caption)}
+                  showCaptions={showCaptions}
+                />
+              </div>
+            ))}
+            <FullscreenViewer 
+              image={fullscreenImage || ''} 
+              onClose={handleCloseFullscreen}
+              onNext={handleNextImage}
+              onPrev={handlePrevImage}
+              onDeleteImage={handleDeleteImage}
+            />
+          </>
+        ) : activeTab === 'descriptions' ? (
+          <Descriptions
+            descriptions={descriptions}
+            onDescriptionChange={handleDescriptionChange}
+            onBlur={saveProject}
+          />
+        ) : (
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Export Options</h2>
+            <button
+              onClick={handleExportToPDF}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-4"
+            >
+              Export to PDF
+            </button>
+            <button
+              onClick={handleExportToZip}
+              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+            >
+              Export to Zip
+            </button>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
