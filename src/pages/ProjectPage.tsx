@@ -12,6 +12,8 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArchiveIcon from '@mui/icons-material/Archive';
+import { exportImagesTabToPDF } from '../utils/exportPdf';
+import { convertGridsForExport } from '../utils/convertGridsForExport';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -253,8 +255,14 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
     window.electronAPI.saveProject(stateToSave);
   };
 
-  const handleExportToPDF = () => {
-    console.log('Export to PDF triggered');
+  const handleExportToPDF = async () => {
+    const exportGrids = convertGridsForExport(grids);
+    await exportImagesTabToPDF({
+      projectName,
+      grids: exportGrids,
+      gridConfigs,
+      showCaptions,
+    });
   };
 
   const handleExportToZip = () => {
