@@ -23,6 +23,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     copyImageToClipboard: (filePath) => ipcRenderer.invoke('copy-image-to-clipboard', filePath),
     openImageInExplorer: (filePath) => ipcRenderer.invoke('open-image-in-explorer', filePath),
     deleteImage: (filePath) => ipcRenderer.invoke('delete-image', filePath),
+    // Settings APIs
+    getSettings: () => ipcRenderer.invoke('get-settings'),
+    setSettings: (settings) => ipcRenderer.invoke('set-settings', settings),
+    selectDirectory: () => ipcRenderer.invoke('select-directory'),
 });
 // Global drop listener now directly invokes the callback
 window.addEventListener('drop', (e) => {

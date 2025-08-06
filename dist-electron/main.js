@@ -6,7 +6,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
-const loraDataRoot = 'D:\\LoraData';
+const url_1 = __importDefault(require("url"));
+const settings_1 = require("./settings");
+let settings = (0, settings_1.getSettings)();
+// Function to get the current loraDataRoot
+function getLoraDataRoot() {
+    return settings.loraDataRoot;
+}
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
     electron_1.app.quit();
@@ -62,29 +68,31 @@ const createWindow = () => {
         win.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
     }
     // IPC handler to save project state
-    electron_1.ipcMain.handle('save-project', async (event, state) => {
-        const projectPath = path_1.default.join(loraDataRoot, state.projectName);
+    electron_1.ipcMain.handle('save-project', async (event, projectData) => {
+        const projectPath = path_1.default.join(getLoraDataRoot(), projectData.projectName);
         if (!fs_1.default.existsSync(projectPath)) {
             fs_1.default.mkdirSync(projectPath, { recursive: true });
         }
-        const stateToSave = {
-            projectName: state.projectName,
-            grids: { ...state.grids },
-            descriptions: { ...state.descriptions }, // Include descriptions in the saved state
-        };
-        // Convert absolute file URLs back to relative paths for saving
-        for (const section in stateToSave.grids) {
-            stateToSave.grids[section] = state.grids[section].map(imagePath => {
-                if (imagePath && imagePath.startsWith('file://')) {
-                    const decodedPath = decodeURI(imagePath.substring(7));
-                    return path_1.default.basename(decodedPath);
+        // When saving, convert image paths to be relative to the project folder
+        const relativePathGrids = JSON.parse(JSON.stringify(projectData.grids)); // Deep copy
+        for (const section in relativePathGrids) {
+            relativePathGrids[section] = relativePathGrids[section].map((imageSlot) => {
+                if (imageSlot && imageSlot.path && imageSlot.path.startsWith('file://')) {
+                    const filePath = url_1.default.fileURLToPath(imageSlot.path);
+                    const relativePath = path_1.default.relative(projectPath, filePath);
+                    return { ...imageSlot, path: relativePath.replace(/\\/g, '/') };
                 }
-                return imagePath; // Already a relative path or null
+                // If it's already a relative path or some other format, keep it as is
+                return imageSlot;
             });
         }
+        const dataToSave = {
+            ...projectData,
+            grids: relativePathGrids,
+        };
         const savePath = path_1.default.join(projectPath, 'project.json');
         try {
-            fs_1.default.writeFileSync(savePath, JSON.stringify(stateToSave, null, 2));
+            fs_1.default.writeFileSync(savePath, JSON.stringify(dataToSave, null, 2));
             return { success: true, path: savePath };
         }
         catch (error) {
@@ -97,16 +105,17 @@ const createWindow = () => {
     electron_1.ipcMain.handle('load-project', async (event, projectName) => {
         if (projectName) {
             try {
-                const projectFilePath = path_1.default.join(loraDataRoot, projectName, 'project.json');
+                const projectFilePath = path_1.default.join(getLoraDataRoot(), projectName, 'project.json');
                 const projectDir = path_1.default.dirname(projectFilePath);
                 const data = JSON.parse(fs_1.default.readFileSync(projectFilePath, 'utf-8'));
                 // Convert relative image names back to absolute paths for rendering
                 for (const section in data.grids) {
-                    data.grids[section] = data.grids[section].map((imageName) => {
-                        if (imageName) {
-                            return path_1.default.join(projectDir, imageName);
+                    data.grids[section] = data.grids[section].map((imageSlot) => {
+                        if (imageSlot && imageSlot.path) {
+                            const absolutePath = path_1.default.join(projectDir, imageSlot.path);
+                            return { ...imageSlot, path: absolutePath };
                         }
-                        return null;
+                        return imageSlot;
                     });
                 }
                 return { success: true, data };
@@ -120,7 +129,7 @@ const createWindow = () => {
         // Fallback to opening a file dialog if no project name is provided
         const result = await electron_1.dialog.showOpenDialog({
             title: 'Load Lora DataSet Project',
-            defaultPath: loraDataRoot,
+            defaultPath: getLoraDataRoot(),
             properties: ['openFile'],
             filters: [{ name: 'Project Files', extensions: ['json'] }],
         });
@@ -150,7 +159,7 @@ const createWindow = () => {
     });
     // IPC handler to copy an image to the project folder
     electron_1.ipcMain.handle('copy-image', async (event, projectName, sourcePath, customFileName) => {
-        const projectPath = path_1.default.join(loraDataRoot, projectName);
+        const projectPath = path_1.default.join(getLoraDataRoot(), projectName);
         if (!fs_1.default.existsSync(projectPath)) {
             fs_1.default.mkdirSync(projectPath, { recursive: true });
         }
@@ -169,6 +178,11 @@ const createWindow = () => {
     // IPC handler to fetch the list of projects
     electron_1.ipcMain.handle('get-projects', async () => {
         try {
+            const loraDataRoot = getLoraDataRoot();
+            if (!fs_1.default.existsSync(loraDataRoot)) {
+                fs_1.default.mkdirSync(loraDataRoot, { recursive: true });
+                console.log(`Created data directory: ${loraDataRoot}`);
+            }
             const projects = fs_1.default.readdirSync(loraDataRoot).filter((item) => {
                 const itemPath = path_1.default.join(loraDataRoot, item);
                 return fs_1.default.statSync(itemPath).isDirectory();
@@ -241,6 +255,25 @@ const createWindow = () => {
             return { success: false, error: message };
         }
     });
+    // IPC handlers for app settings
+    electron_1.ipcMain.handle('get-settings', async () => {
+        return (0, settings_1.getSettings)();
+    });
+    electron_1.ipcMain.handle('set-settings', async (event, newSettings) => {
+        (0, settings_1.saveSettings)(newSettings);
+        settings = newSettings;
+        return { success: true };
+    });
+    electron_1.ipcMain.handle('select-directory', async () => {
+        const result = await electron_1.dialog.showOpenDialog({
+            properties: ['openDirectory'],
+            title: 'Select Lora Data Root Directory',
+        });
+        if (result.canceled || result.filePaths.length === 0) {
+            return null;
+        }
+        return result.filePaths[0];
+    });
 };
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', () => {
@@ -252,6 +285,9 @@ electron_1.app.on('window-all-closed', () => {
     electron_1.ipcMain.removeHandler('copy-image-to-clipboard');
     electron_1.ipcMain.removeHandler('open-image-in-explorer');
     electron_1.ipcMain.removeHandler('delete-image');
+    electron_1.ipcMain.removeHandler('get-settings');
+    electron_1.ipcMain.removeHandler('set-settings');
+    electron_1.ipcMain.removeHandler('select-directory');
     if (process.platform !== 'darwin') {
         electron_1.app.quit();
     }

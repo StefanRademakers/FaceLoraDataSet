@@ -3,9 +3,10 @@ import React, { useState, useEffect } from 'react';
 interface LandingPageProps {
   onCreateProject: (projectName: string) => void;
   onLoadProject: (projectName: string) => void;
+  onOpenSettings: () => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onCreateProject, onLoadProject }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onCreateProject, onLoadProject, onOpenSettings }) => {
   const [projectName, setProjectName] = useState('');
   const [existingProjects, setExistingProjects] = useState<string[]>([]);
 
@@ -24,7 +25,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onCreateProject, onLoadProjec
 
   return (
     <div className="p-8">
-      <h1 className="text-4xl font-bold mb-4">Face Lora DataSet Manager</h1>
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={onOpenSettings}
+          className="bg-gray-700 text-white rounded-lg px-4 py-2 hover:bg-gray-600"
+        >
+          Settings
+        </button>
+      </div>
 
       <div className="mb-8">
         <label htmlFor="projectName" className="block text-lg font-medium mb-2">New Project:</label>

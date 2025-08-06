@@ -3,8 +3,9 @@ import GridSection from '../components/GridSection';
 import FullscreenViewer from '../components/FullscreenViewer';
 import TabBar from '../components/TabBar';
 import Descriptions from '../components/Descriptions';
+import { ImageSlot } from '../interfaces/types';
 
-const initialGrids: Record<string, (string | null)[]> = {
+const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
   'Close Up Head Emotions': Array(8).fill(null),
   'Medium Head Shots': Array(8).fill(null),
@@ -27,11 +28,12 @@ interface ProjectPageProps {
 
 const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectName, onGoToLanding }) => {
   const [projectName, setProjectName] = useState(initialProjectName);
-  const [grids, setGrids] = useState(initialGrids);
+  const [grids, setGrids] = useState<Record<string, (ImageSlot | null)[]>>(initialGrids);
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
   const [allImages, setAllImages] = useState<string[]>([]);
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'images' | 'descriptions' | 'export'>('images');
+  const [showCaptions, setShowCaptions] = useState(true);
   const [descriptions, setDescriptions] = useState({
     notes: '',
     faceImageDescription: '',
@@ -62,13 +64,14 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       };
       setDescriptions(loadedDescriptions);
 
-      const absolutePathGrids = { ...result.data.grids };
-      for (const section in absolutePathGrids) {
-        absolutePathGrids[section] = absolutePathGrids[section].map((imagePath: string | null) => {
-          if (imagePath && !imagePath.startsWith('file://')) {
-            return `file://${imagePath.replace(/\\/g, '/')}`;
-          }
-          return imagePath;
+      const absolutePathGrids: Record<string, (ImageSlot | null)[]> = { ...initialGrids };
+      for (const section in result.data.grids) {
+        absolutePathGrids[section] = result.data.grids[section].map((image: ImageSlot | null) => {
+          if (!image) return null;
+          
+          // For new ImageSlot objects, just ensure the path is correct
+          const path = image.path.startsWith('file://') ? image.path : `file://${image.path.replace(/\\/g, '/')}`;
+          return { ...image, path };
         });
       }
       setGrids(absolutePathGrids);
@@ -108,7 +111,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
             const newGrids = { ...prevGrids };
             const newImages = [...(newGrids[section] || [])];
             const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}?t=${new Date().getTime()}` : '';
-            newImages[index] = finalUrl;
+            newImages[index] = { path: finalUrl, caption: '' }; // Create new ImageSlot
             newGrids[section] = newImages;
 
             const stateToSave = {
@@ -158,15 +161,18 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
     setGrids((prevGrids) => {
       const newGrids = { ...prevGrids };
       const newImages = [...(newGrids[section] || [])];
-      newImages[slotIndex] = filePath;
+      newImages[slotIndex] = { path: filePath, caption: '' };
       newGrids[section] = newImages;
       return newGrids;
     });
   };
 
   const handleClickImage = (imagePath: string) => {
-    const flatImages = Object.values(grids).flat().filter((img): img is string => img !== null);
-    const index = flatImages.findIndex(img => img === imagePath);
+    const flatImages = Object.values(grids)
+      .flat()
+      .filter((img): img is ImageSlot => img !== null)
+      .map(img => img.path);
+    const index = flatImages.findIndex(path => path === imagePath);
 
     setAllImages(flatImages);
     setCurrentImageIndex(index);
@@ -193,6 +199,27 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       setCurrentImageIndex(prevIndex);
       setFullscreenImage(allImages[prevIndex]);
     }
+  };
+
+  const handleCaptionChange = (section: string, index: number, caption: string) => {
+    setGrids(prevGrids => {
+      const newGrids = { ...prevGrids };
+      const newImages = [...newGrids[section]];
+      const imageSlot = newImages[index];
+      if (imageSlot) {
+        newImages[index] = { ...imageSlot, caption };
+        newGrids[section] = newImages;
+
+        // Auto-save on caption change
+        const stateToSave = {
+          projectName,
+          grids: newGrids,
+          descriptions,
+        };
+        window.electronAPI.saveProject(stateToSave);
+      }
+      return newGrids;
+    });
   };
 
   const handleDescriptionChange = (field: string, value: string) => {
@@ -235,7 +262,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       for (const section in newGrids) {
         const imageIndex = newGrids[section].findIndex((img) => {
           if (!img) return false;
-          const imgBaseName = img.split('?')[0];
+          const imgBaseName = img.path.split('?')[0];
           const stateImgBaseName = imgBaseName.substring(imgBaseName.lastIndexOf('/') + 1);
           return stateImgBaseName === baseNameToDelete;
         });
@@ -277,6 +304,15 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         onGoToLanding={onGoToLanding}
       />
 
+      <div className="mb-4">
+        <button
+          onClick={() => setShowCaptions(!showCaptions)}
+          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+        >
+          {showCaptions ? 'Hide' : 'Show'} Captions
+        </button>
+      </div>
+
       {activeTab === 'images' ? (
         <>
           <div className="grid grid-cols-2 gap-4 mb-8">
@@ -311,6 +347,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                 images={images}
                 onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
                 onClickImage={handleClickImage}
+                onCaptionChange={(index, caption) => handleCaptionChange(title, index, caption)}
+                showCaptions={showCaptions}
               />
             </div>
           ))}

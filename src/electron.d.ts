@@ -11,6 +11,9 @@ declare global {
       copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
       openImageInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       deleteImage: (filePath: string) => Promise<{ success: boolean; error?: string }>;
+      getSettings: () => Promise<{ loraDataRoot: string }>;
+      setSettings: (settings: { loraDataRoot: string }) => void;
+      selectDirectory: () => Promise<string | null>;
     };
   }
 }
