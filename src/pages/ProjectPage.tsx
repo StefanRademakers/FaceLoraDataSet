@@ -14,6 +14,7 @@ import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import { exportImagesTabToPDF } from '../utils/exportPdf';
 import { convertGridsForExport } from '../utils/convertGridsForExport';
+import { exportProjectToZip } from '../utils/exportZip';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -265,8 +266,14 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
     });
   };
 
-  const handleExportToZip = () => {
-    console.log('Export to Zip triggered');
+  const handleExportToZip = async () => {
+    // Convert grids to export format (reuse the same as for PDF)
+    const exportGrids = convertGridsForExport(grids);
+    await exportProjectToZip({
+      projectName,
+      grids: exportGrids,
+      descriptions
+    });
   };
 
   const handleDeleteImage = (imagePath: string) => {

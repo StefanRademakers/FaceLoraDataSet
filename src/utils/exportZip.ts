@@ -15,8 +15,8 @@ export async function exportProjectToZip({
   const projectJson = JSON.stringify({ projectName, grids, descriptions }, null, 2);
   zip.file('project.json', projectJson);
 
-  // Add images and captions
-  for (const [section, images] of Object.entries(grids)) {
+  // Add images and captions (flattened, no subdirectories)
+  for (const images of Object.values(grids)) {
     for (const img of images) {
       if (!img || !img.path) continue;
       try {
@@ -26,12 +26,11 @@ export async function exportProjectToZip({
         // Get filename from path
         const urlParts = img.path.split('/');
         const filename = urlParts[urlParts.length - 1].split('?')[0];
-        // Add image to zip (in section folder)
-        const sectionFolder = zip.folder(section) || zip;
-        sectionFolder.file(filename, blob);
+        // Add image to zip root
+        zip.file(filename, blob);
         // Add caption as .txt if present
         if (img.caption && img.caption.trim()) {
-          sectionFolder.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption);
+          zip.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption);
         }
       } catch {
         // skip if fetch fails
@@ -39,12 +38,18 @@ export async function exportProjectToZip({
     }
   }
 
+  // Add export timestamp file
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  zip.file('exported_at.txt', `Exported at: ${now.toISOString()}`);
+
   // Generate zip and trigger download
   const content = await zip.generateAsync({ type: 'blob' });
   const url = URL.createObjectURL(content);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `${projectName || 'project'}.zip`;
+  a.download = `${projectName || 'project'}_${dateStr}.zip`;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => {
