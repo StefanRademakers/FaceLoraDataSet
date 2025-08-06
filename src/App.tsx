@@ -268,27 +268,49 @@ const App: React.FC = () => {
   };
 
   const handleDeleteImage = (imagePath: string) => {
+    // The imagePath from FullscreenViewer is a full file URL.
+    // We need to extract the base name to compare with the relative paths in the state.
+    const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
+
     setGrids((prevGrids) => {
       const newGrids = { ...prevGrids };
+      let imageFound = false;
       for (const section in newGrids) {
-        const imageIndex = newGrids[section].findIndex((img) => img === imagePath);
+        const imageIndex = newGrids[section].findIndex((img) => {
+          if (!img) return false;
+          // Compare the base name of the image in the state, stripping any query params
+          const imgBaseName = img.split('?')[0];
+          const stateImgBaseName = imgBaseName.substring(imgBaseName.lastIndexOf('/') + 1);
+          return stateImgBaseName === baseNameToDelete;
+        });
+
         if (imageIndex !== -1) {
           newGrids[section][imageIndex] = null;
+          imageFound = true;
           break;
         }
       }
 
-      const stateToSave = {
-        projectName,
-        grids: newGrids,
-        descriptions,
-      };
-      window.electronAPI.saveProject(stateToSave);
+      if (imageFound) {
+        // Auto-save the project with the new state
+        const stateToSave = {
+          projectName,
+          grids: newGrids,
+          descriptions,
+        };
+        window.electronAPI.saveProject(stateToSave);
+      }
 
       return newGrids;
     });
-    // Also remove from the fullscreen image list
-    setAllImages((prevImages) => prevImages.filter((img) => img !== imagePath));
+
+    // Also remove from the fullscreen image list by comparing base names
+    setAllImages((prevImages) =>
+      prevImages.filter((img) => {
+        const imgBaseName = img.substring(img.lastIndexOf('/') + 1).split('?')[0];
+        return imgBaseName !== baseNameToDelete;
+      })
+    );
   };
 
   if (currentPage === 'landing') {
