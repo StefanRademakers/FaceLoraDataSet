@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { AppSettings } from '../interfaces/types';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface SettingsPageProps {
   onGoBack: () => void;
@@ -25,50 +33,81 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
     if (settings) {
       window.electronAPI.setSettings(settings);
     }
-    onGoBack(); // Go back to the previous page
+    onGoBack();
   };
 
   if (!settings) {
-    return <div>Loading...</div>;
+    return (
+      <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <Paper elevation={6} sx={{ width: '100%', p: 4, bgcolor: '#23272b', borderRadius: 3, textAlign: 'center' }}>
+          <Typography variant="h6" sx={{ color: 'white' }}>Loading...</Typography>
+        </Paper>
+      </Container>
+    );
   }
 
   return (
-    <div className="container mx-auto p-4 bg-gray-900 text-white min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <div className="mb-4">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Lora Data Root Directory
-        </label>
-        <div className="flex items-center">
-          <input
-            type="text"
-            readOnly
-            value={settings.loraDataRoot}
-            className="bg-gray-700 border border-gray-600 text-white text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5"
-          />
-          <button
-            onClick={handleSelectDirectory}
-            className="ml-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg"
-          >
-            Browse
-          </button>
+    <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <Paper elevation={6} sx={{ width: '100%', p: 4, bgcolor: '#23272b', borderRadius: 3 }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+          <Tooltip title="Back">
+            <IconButton onClick={onGoBack} color="primary" size="large" sx={{ bgcolor: '#222', mr: 2, '&:hover': { bgcolor: '#333' } }}>
+              <ArrowBackIcon />
+            </IconButton>
+          </Tooltip>
+          <Typography variant="h5" sx={{ color: 'white', fontWeight: 700 }}>
+            Settings
+          </Typography>
         </div>
-      </div>
-      <div className="flex justify-end">
-        <button
-          onClick={onGoBack}
-          className="mr-2 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-lg"
-        >
-          Cancel
-        </button>
-        <button
-          onClick={handleSave}
-          className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg"
-        >
-          Save and Go Back
-        </button>
-      </div>
-    </div>
+        <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#282c34', borderRadius: 2 }}>
+          <Typography variant="subtitle1" sx={{ color: 'white', mb: 2 }}>
+            Lora Data Root Directory
+          </Typography>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              label="Lora Data Root"
+              value={settings.loraDataRoot}
+              InputProps={{ readOnly: true }}
+              variant="outlined"
+              sx={{
+                mr: 2,
+                input: { color: 'white' },
+                label: { color: '#90caf9' },
+                '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } }
+              }}
+              InputLabelProps={{ style: { color: '#90caf9' } }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSelectDirectory}
+              sx={{ fontWeight: 600 }}
+            >
+              Browse
+            </Button>
+          </div>
+        </Paper>
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Button
+            onClick={onGoBack}
+            variant="outlined"
+            color="secondary"
+            sx={{ mr: 2, fontWeight: 600 }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSave}
+            variant="contained"
+            color="success"
+            sx={{ fontWeight: 600 }}
+          >
+            Save and Go Back
+          </Button>
+        </div>
+      </Paper>
+    </Container>
   );
 };
 

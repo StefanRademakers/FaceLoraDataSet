@@ -6,6 +6,12 @@ import Descriptions from '../components/Descriptions';
 import { ImageSlot } from '../interfaces/types';
 import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import TextField from '@mui/material/TextField';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import ArchiveIcon from '@mui/icons-material/Archive';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -306,45 +312,47 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         />
       </div>
       <div className="p-8">
-        <div className="mb-4">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={showCaptions}
-                onChange={() => setShowCaptions(!showCaptions)}
-                color="primary"
-              />
-            }
-            label="Show Captions"
-            sx={{
-              color: 'white',
-              '.MuiSwitch-thumb': { backgroundColor: '#90caf9' },
-              '.MuiSwitch-track': { backgroundColor: '#424242' }
-            }}
-          />
-        </div>
         {activeTab === 'images' ? (
           <>
+            <div className="mb-4">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showCaptions}
+                    onChange={() => setShowCaptions(!showCaptions)}
+                    color="primary"
+                  />
+                }
+                label="Show Captions"
+                sx={{
+                  color: 'white',
+                  '.MuiSwitch-thumb': { backgroundColor: '#90caf9' },
+                  '.MuiSwitch-track': { backgroundColor: '#424242' }
+                }}
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
-                <label htmlFor="projectName" className="block text-lg font-medium mb-2">Project Name</label>
-                <input
-                  type="text"
-                  id="projectName"
+                <TextField
+                  fullWidth
+                  label="Project Name"
+                  variant="outlined"
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
-                  className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+                  sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' }, '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } } }}
+                  InputLabelProps={{ style: { color: '#90caf9' } }}
                 />
               </div>
               <div>
-                <label htmlFor="loraTrigger" className="block text-lg font-medium mb-2">Lora Trigger</label>
-                <input
-                  type="text"
-                  id="loraTrigger"
+                <TextField
+                  fullWidth
+                  label="Lora Trigger"
+                  variant="outlined"
                   value={descriptions.loraTrigger}
                   onChange={(e) => handleDescriptionChange('loraTrigger', e.target.value)}
                   onBlur={() => saveProject()}
-                  className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
+                  sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' }, '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } } }}
+                  InputLabelProps={{ style: { color: '#90caf9' } }}
                 />
               </div>
             </div>
@@ -376,21 +384,31 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
             onBlur={saveProject}
           />
         ) : (
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Export Options</h2>
-            <button
+          <Paper elevation={2} sx={{ p: 4, bgcolor: '#282c34', borderRadius: 2, maxWidth: 480, margin: '0 auto' }}>
+            <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 2 }}>
+              Export Options
+            </Typography>
+            <Button
               onClick={handleExportToPDF}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 mb-4"
+              variant="contained"
+              color="primary"
+              startIcon={<PictureAsPdfIcon />}
+              fullWidth
+              sx={{ mb: 2, fontWeight: 600 }}
             >
               Export to PDF
-            </button>
-            <button
+            </Button>
+            <Button
               onClick={handleExportToZip}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+              variant="contained"
+              color="primary"
+              startIcon={<ArchiveIcon />}
+              fullWidth
+              sx={{ fontWeight: 600 }}
             >
               Export to Zip
-            </button>
-          </div>
+            </Button>
+          </Paper>
         )}
       </div>
     </>

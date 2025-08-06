@@ -1,4 +1,5 @@
 import React from 'react';
+import TextField from '@mui/material/TextField';
 
 // Define a more generic type for the descriptions object
 type DescriptionData = {
@@ -24,13 +25,25 @@ const Descriptions: React.FC<DescriptionsProps> = ({ descriptions, onDescription
             {/* Simple logic to format the key into a nice label */}
             {key.replace(/([A-Z])/g, ' $1').replace(/^./, (str) => str.toUpperCase())}
           </label>
-          <textarea
+          <TextField
             id={key}
             value={descriptions[key] || ''}
             onChange={(e) => onDescriptionChange(key, e.target.value)}
             onBlur={onBlur}
-            className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
-            rows={4}
+            fullWidth
+            multiline
+            minRows={4}
+            variant="outlined"
+            sx={{
+              bgcolor: '#23272b',
+              '& .MuiOutlinedInput-root': {
+                color: 'white',
+                '& fieldset': { borderColor: '#444' },
+                '&:hover fieldset': { borderColor: '#90caf9' },
+              },
+              '& .MuiInputLabel-root': { color: '#90caf9' },
+            }}
+            InputLabelProps={{ style: { color: '#90caf9' } }}
           />
         </div>
       ))}

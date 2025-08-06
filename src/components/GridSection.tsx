@@ -1,5 +1,6 @@
 import React from 'react';
 import { ImageSlot } from '../interfaces/types';
+import TextField from '@mui/material/TextField';
 
 interface GridSectionProps {
   title: string;
@@ -37,12 +38,25 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, images, onClickI
               )}
             </div>
             {showCaptions && imageSlot && (
-              <textarea
+              <TextField
                 value={imageSlot.caption}
                 onChange={(e) => onCaptionChange(index, e.target.value)}
-                className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2 mt-2"
-                rows={3}
+                fullWidth
+                multiline
+                minRows={3}
+                variant="outlined"
                 placeholder="Enter caption..."
+                sx={{
+                  mt: 2,
+                  bgcolor: '#23272b',
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: '#444' },
+                    '&:hover fieldset': { borderColor: '#90caf9' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#90caf9' },
+                }}
+                InputLabelProps={{ style: { color: '#90caf9' } }}
               />
             )}
           </div>
