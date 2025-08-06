@@ -291,6 +291,12 @@ const App: React.FC = () => {
 
       <div className="mb-4">
         <button
+          onClick={handleGoToLanding}
+          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mr-2"
+        >
+          Home
+        </button>
+        <button
           onClick={() => setActiveTab('images')}
           className={`px-4 py-2 rounded-lg ${activeTab === 'images' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-black'}`}
         >
@@ -322,13 +328,6 @@ const App: React.FC = () => {
               className="bg-gray-800 border border-gray-600 rounded-lg w-full p-2"
             />
           </div>
-
-          <button
-            onClick={handleGoToLanding}
-            className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 mb-8"
-          >
-            Back to Landing Page
-          </button>
 
           {Object.entries(grids).map(([title, images]) => (
             <div key={title} data-section-title={title}>
