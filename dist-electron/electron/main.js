@@ -347,6 +347,13 @@ const createWindow = () => {
                 }
             }
         }
+        // Open the exported folder in the system file explorer (Windows / cross-platform)
+        try {
+            await electron_1.shell.openPath(targetDir);
+        }
+        catch (e) {
+            console.warn('Could not auto-open exported folder:', e);
+        }
         return { success: true, folderPath: targetDir };
     });
 };

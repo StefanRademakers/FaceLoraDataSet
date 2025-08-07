@@ -18,7 +18,7 @@ declare global {
       getOpenAIKey: () => Promise<string | null>;
       setOpenAIKey: (key: string) => Promise<boolean>;
       autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string) => Promise<string>;
-      exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => Promise<{ success: boolean }>;
+  exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => Promise<{ success: boolean; folderPath: string }>;
     };
   }
 }
