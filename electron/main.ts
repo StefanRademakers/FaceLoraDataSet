@@ -328,6 +328,38 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
   const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition);
   return caption;
 });
+  // IPC handler for exporting to AI Toolkit datasets folder
+  ipcMain.handle('export-to-ai-toolkit', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>) => {
+    // Load updated settings
+    settings = getSettings();
+    const toolkitRoot = settings.aiToolkitDatasetsPath;
+    const targetDir = path.join(toolkitRoot, projectName);
+    // Create target directory
+    await fs.promises.mkdir(targetDir, { recursive: true });
+    // Copy each image and write captions
+    for (const images of Object.values(grids)) {
+      for (const img of images) {
+        if (!img || !img.path) continue;
+        let src = img.path;
+        try {
+          if (src.startsWith('file://')) {
+            src = url.fileURLToPath(src);
+          }
+          const filename = path.basename(src);
+          const destImage = path.join(targetDir, filename);
+          await fs.promises.copyFile(src, destImage);
+          if (img.caption && img.caption.trim()) {
+            const txtName = filename.replace(/\.[^.]+$/, '.txt');
+            const destText = path.join(targetDir, txtName);
+            await fs.promises.writeFile(destText, img.caption.trim(), 'utf-8');
+          }
+        } catch (err) {
+          console.error('Error exporting file to ai-toolkit:', err);
+        }
+      }
+    }
+    return { success: true, folderPath: targetDir };
+  });
 };
 
 app.on('ready', createWindow);
@@ -346,6 +378,16 @@ app.on('window-all-closed', () => {
   ipcMain.removeHandler('select-directory');
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+// Handler to open a folder in the system file explorer
+ipcMain.handle('open-folder-in-explorer', async (event, folderPath: string) => {
+  try {
+    await shell.openPath(folderPath);
+    return { success: true };
+  } catch (error) {
+    console.error('Error opening folder in explorer:', error);
+    return { success: false, error: String(error) };
   }
 });
 

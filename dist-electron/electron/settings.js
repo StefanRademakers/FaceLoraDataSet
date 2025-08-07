@@ -13,12 +13,14 @@ const fs_1 = __importDefault(require("fs"));
 const settingsFilePath = path_1.default.join(electron_1.app.getPath('userData'), 'loradataset_settings.json');
 const defaultSettings = {
     loraDataRoot: path_1.default.join(electron_1.app.getPath('home'), 'LoraData'),
+    aiToolkitDatasetsPath: 'D:\\ai-toolkit\\datasets',
 };
 function getSettings() {
     try {
         if (fs_1.default.existsSync(settingsFilePath)) {
             const settingsJson = fs_1.default.readFileSync(settingsFilePath, 'utf-8');
-            return JSON.parse(settingsJson);
+            const stored = JSON.parse(settingsJson);
+            return { ...defaultSettings, ...stored };
         }
         else {
             // Create the file with default settings if it doesn't exist

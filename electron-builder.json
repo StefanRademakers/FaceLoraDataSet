@@ -2,9 +2,10 @@
   "appId": "com.mediavibe.facelora",
   "productName": "Mediavibe Face Lora DataSet",
   "directories": {
-    "output": "dist",
+    "output": "release",
     "buildResources": "assets"
   },
+  "artifactName": "${productName}-Setup-${version}.${ext}",
   "files": [
     "dist-electron/**/*",
     "dist/**/*",

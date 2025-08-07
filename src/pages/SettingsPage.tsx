@@ -18,7 +18,7 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
   const [openAIKey, setOpenAIKey] = useState<string>('');
 
   useEffect(() => {
-    window.electronAPI.getSettings().then(setSettings);
+    window.electronAPI.getSettings().then((s) => setSettings(s));
     window.electronAPI.getOpenAIKey().then((key: string | null) => {
       if (key) setOpenAIKey(key);
     });

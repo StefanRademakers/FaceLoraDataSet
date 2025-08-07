@@ -15,6 +15,7 @@ import ArchiveIcon from '@mui/icons-material/Archive';
 import { exportImagesTabToPDF } from '../utils/exportPdf';
 import { convertGridsForExport } from '../utils/convertGridsForExport';
 import { exportProjectToZip } from '../utils/exportZip';
+import FolderCopyIcon from '@mui/icons-material/FolderCopy';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -277,6 +278,16 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       descriptions
     });
   };
+  
+  const handleExportToAiToolkit = async () => {
+    const exportGrids = convertGridsForExport(grids);
+    try {
+      await window.electronAPI.exportToAiToolkit(projectName, exportGrids);
+      console.log('Export to ai-toolkit completed');
+    } catch (err) {
+      console.error('Export to ai-toolkit error:', err);
+    }
+  };
 
   const handleDeleteImage = (imagePath: string) => {
     const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
@@ -415,6 +426,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
             onBlur={saveProject}
           />
         ) : (
+          // Export Section
           <Paper elevation={2} sx={{ p: 4, bgcolor: '#282c34', borderRadius: 2, maxWidth: 480, margin: '0 auto' }}>
             <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 2 }}>
               Export Options
@@ -438,6 +450,16 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
               sx={{ fontWeight: 600 }}
             >
               Export to Zip
+            </Button>
+            <Button
+              onClick={handleExportToAiToolkit}
+              variant="contained"
+              color="primary"
+              startIcon={<FolderCopyIcon />}
+              fullWidth
+              sx={{ mt: 2, fontWeight: 600 }}
+            >
+              Export to ai-toolkit
             </Button>
           </Paper>
         )}

@@ -34,6 +34,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
         console.log('Preload: autoGenerateCaption args:', { imagePath, token, subjectAddition });
         return ipcRenderer.invoke('auto-generate-caption', imagePath, token, subjectAddition);
     },
+    exportToAiToolkit: (projectName, grids) => {
+        console.log('Preload: exportToAiToolkit args:', { projectName, grids });
+        return ipcRenderer.invoke('export-to-ai-toolkit', projectName, grids);
+    },
+    openFolderInExplorer: (folderPath) => ipcRenderer.invoke('open-folder-in-explorer', folderPath),
     getOpenAIKey: () => ipcRenderer.invoke('get-openai-key'),
     setOpenAIKey: (key) => ipcRenderer.invoke('set-openai-key', key),
 });

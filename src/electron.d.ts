@@ -11,12 +11,14 @@ declare global {
       copyImageToClipboard: (filePath: string) => Promise<{ success: boolean, error?: string }>;
       openImageInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       deleteImage: (filePath: string) => Promise<{ success: boolean; error?: string }>;
-      getSettings: () => Promise<{ loraDataRoot: string }>;
-      setSettings: (settings: { loraDataRoot: string }) => void;
+      openFolderInExplorer: (folderPath: string) => Promise<{ success: boolean; error?: string }>;
+         getSettings: () => Promise<{ loraDataRoot: string; aiToolkitDatasetsPath: string }>;
+         setSettings: (settings: { loraDataRoot: string; aiToolkitDatasetsPath: string }) => void;
       selectDirectory: () => Promise<string | null>;
       getOpenAIKey: () => Promise<string | null>;
       setOpenAIKey: (key: string) => Promise<boolean>;
       autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string) => Promise<string>;
+      exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => Promise<{ success: boolean }>;
     };
   }
 }

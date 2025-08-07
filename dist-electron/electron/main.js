@@ -315,6 +315,40 @@ const createWindow = () => {
         const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition);
         return caption;
     });
+    // IPC handler for exporting to AI Toolkit datasets folder
+    electron_1.ipcMain.handle('export-to-ai-toolkit', async (event, projectName, grids) => {
+        // Load updated settings
+        settings = (0, settings_1.getSettings)();
+        const toolkitRoot = settings.aiToolkitDatasetsPath;
+        const targetDir = path_1.default.join(toolkitRoot, projectName);
+        // Create target directory
+        await fs_1.default.promises.mkdir(targetDir, { recursive: true });
+        // Copy each image and write captions
+        for (const images of Object.values(grids)) {
+            for (const img of images) {
+                if (!img || !img.path)
+                    continue;
+                let src = img.path;
+                try {
+                    if (src.startsWith('file://')) {
+                        src = url_1.default.fileURLToPath(src);
+                    }
+                    const filename = path_1.default.basename(src);
+                    const destImage = path_1.default.join(targetDir, filename);
+                    await fs_1.default.promises.copyFile(src, destImage);
+                    if (img.caption && img.caption.trim()) {
+                        const txtName = filename.replace(/\.[^.]+$/, '.txt');
+                        const destText = path_1.default.join(targetDir, txtName);
+                        await fs_1.default.promises.writeFile(destText, img.caption.trim(), 'utf-8');
+                    }
+                }
+                catch (err) {
+                    console.error('Error exporting file to ai-toolkit:', err);
+                }
+            }
+        }
+        return { success: true, folderPath: targetDir };
+    });
 };
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', () => {
@@ -331,6 +365,17 @@ electron_1.app.on('window-all-closed', () => {
     electron_1.ipcMain.removeHandler('select-directory');
     if (process.platform !== 'darwin') {
         electron_1.app.quit();
+    }
+});
+// Handler to open a folder in the system file explorer
+electron_1.ipcMain.handle('open-folder-in-explorer', async (event, folderPath) => {
+    try {
+        await electron_1.shell.openPath(folderPath);
+        return { success: true };
+    }
+    catch (error) {
+        console.error('Error opening folder in explorer:', error);
+        return { success: false, error: String(error) };
     }
 });
 electron_1.app.on('activate', () => {
