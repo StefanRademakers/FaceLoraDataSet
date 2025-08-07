@@ -4,6 +4,7 @@ import fs from 'fs';
 
 export interface AppSettings {
   loraDataRoot: string;
+  // Note: OpenAI API key is stored securely via keytar, not in this JSON
 }
 
 const settingsFilePath = path.join(app.getPath('userData'), 'loradataset_settings.json');
@@ -34,5 +35,28 @@ export function saveSettings(settings: AppSettings): void {
     fs.writeFileSync(settingsFilePath, JSON.stringify(settings, null, 2));
   } catch (error) {
     console.error('Error saving settings:', error);
+  }
+}
+
+// Securely store and retrieve OpenAI API key
+// @ts-ignore: keytar module may not have types
+const keytar = require('keytar');
+const serviceName = 'MediavibeFaceLoraDataSet';
+const accountName = 'openai_api_key';
+
+export async function getOpenAIKey(): Promise<string | null> {
+  try {
+    return await keytar.getPassword(serviceName, accountName);
+  } catch (error) {
+    console.error('Error getting OpenAI API key:', error);
+    return null;
+  }
+}
+
+export async function setOpenAIKey(key: string): Promise<void> {
+  try {
+    await keytar.setPassword(serviceName, accountName, key);
+  } catch (error) {
+    console.error('Error setting OpenAI API key:', error);
   }
 }

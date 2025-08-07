@@ -1,10 +1,15 @@
 import React from 'react';
 import { ImageSlot } from '../interfaces/types';
 import TextField from '@mui/material/TextField';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 
 interface GridSectionProps {
   title: string;
   cols: number;
+  // LoRA trigger token for auto captioning
+  loraTrigger: string;
   images: (ImageSlot | null)[];
   onDropImage: (slotIndex: number, filePath: string) => void;
   onClickImage: (imagePath: string) => void;
@@ -12,7 +17,7 @@ interface GridSectionProps {
   showCaptions: boolean;
 }
 
-const GridSection: React.FC<GridSectionProps> = ({ title, cols, images, onClickImage, onCaptionChange, showCaptions }) => {
+const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, images, onClickImage, onCaptionChange, showCaptions }) => {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
@@ -46,6 +51,22 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, images, onClickI
                 minRows={3}
                 variant="outlined"
                 placeholder="Enter caption..."
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        onClick={() => {
+                          window.electronAPI.autoGenerateCaption(imageSlot.path, loraTrigger)
+                            .then((caption: string) => onCaptionChange(index, caption))
+                            .catch((err: any) => console.error('Auto-generate error:', err));
+                        }}
+                        edge="end"
+                      >
+                        <AutoAwesomeIcon color="primary" />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
                 sx={{
                   mt: 2,
                   bgcolor: '#23272b',

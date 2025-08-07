@@ -15,9 +15,13 @@ interface SettingsPageProps {
 
 const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [openAIKey, setOpenAIKey] = useState<string>('');
 
   useEffect(() => {
     window.electronAPI.getSettings().then(setSettings);
+    window.electronAPI.getOpenAIKey().then((key: string | null) => {
+      if (key) setOpenAIKey(key);
+    });
   }, []);
 
   const handleSelectDirectory = async () => {
@@ -39,8 +43,10 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
   if (!settings) {
     return (
       <Container maxWidth="sm" sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Paper elevation={6} sx={{ width: '100%', p: 4, bgcolor: '#23272b', borderRadius: 3, textAlign: 'center' }}>
-          <Typography variant="h6" sx={{ color: 'white' }}>Loading...</Typography>
+        <Paper elevation={6} sx={(theme) => ({ width: '100%', p: 4, bgcolor: theme.palette.background.paper, borderRadius: 3, textAlign: 'center' })}>
+          <Typography variant="h6" sx={(theme) => ({ color: theme.palette.text.primary })}>
+            Loading...
+          </Typography>
         </Paper>
       </Container>
     );
@@ -88,6 +94,30 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
             </Button>
           </div>
         </Paper>
+        <div style={{ marginBottom: 16 }}>
+          <TextField
+            fullWidth
+            label="OpenAI API Key"
+            variant="outlined"
+            type="password"
+            value={openAIKey}
+            onChange={(e) => setOpenAIKey(e.target.value)}
+            sx={(theme) => ({
+              mb: 2,
+              input: { color: theme.palette.text.primary },
+              label: { color: theme.palette.primary.main }
+            })}
+            InputLabelProps={{ style: { color: '#90caf9' } }}
+          />
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => window.electronAPI.setOpenAIKey(openAIKey)}
+            sx={{ fontWeight: 600 }}
+          >
+            Save API Key
+          </Button>
+        </div>
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             onClick={onGoBack}

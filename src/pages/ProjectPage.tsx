@@ -376,6 +376,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                 <GridSection
                   title={title}
                   cols={gridConfigs[title].cols}
+                  loraTrigger={descriptions.loraTrigger}
                   images={images}
                   onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
                   onClickImage={handleClickImage}

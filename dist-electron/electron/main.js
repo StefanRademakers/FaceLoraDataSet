@@ -7,6 +7,7 @@ const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const url_1 = __importDefault(require("url"));
+const OpenAICaptioner_1 = require("../src/utils/OpenAICaptioner");
 const settings_1 = require("./settings");
 let settings = (0, settings_1.getSettings)();
 // Function to get the current loraDataRoot
@@ -18,11 +19,15 @@ if (require('electron-squirrel-startup')) {
     electron_1.app.quit();
 }
 const createWindow = () => {
+    // Preload script path (compiled into dist-electron root)
+    const preloadPath = path_1.default.join(__dirname, 'preload.js');
+    console.log('Loading preload script from:', preloadPath);
     const win = new electron_1.BrowserWindow({
         width: 1830,
         height: 1000,
         webPreferences: {
-            preload: path_1.default.join(__dirname, 'preload.js'),
+            // Preload script (compiled into dist-electron folder)
+            preload: preloadPath,
             contextIsolation: true,
             nodeIntegration: false,
             webSecurity: false, // Required to load file:// URLs
@@ -65,7 +70,10 @@ const createWindow = () => {
         win.webContents.openDevTools();
     }
     else {
-        win.loadFile(path_1.default.join(__dirname, '../dist/index.html'));
+        // Load built React app from dist folder (two levels up from dist-electron/electron)
+        const indexPath = path_1.default.join(__dirname, '..', '..', 'dist', 'index.html');
+        console.log('Loading React index.html from:', indexPath);
+        win.loadFile(indexPath);
     }
     // IPC handler to save project state
     electron_1.ipcMain.handle('save-project', async (event, projectData) => {
@@ -273,6 +281,39 @@ const createWindow = () => {
             return null;
         }
         return result.filePaths[0];
+    });
+    // IPC handlers for OpenAI API key
+    electron_1.ipcMain.handle('get-openai-key', async () => {
+        return await (0, settings_1.getOpenAIKey)();
+    });
+    electron_1.ipcMain.handle('set-openai-key', async (event, key) => {
+        await (0, settings_1.setOpenAIKey)(key);
+        return true;
+    });
+    // IPC handler for auto-generating captions via OpenAI
+    electron_1.ipcMain.handle('auto-generate-caption', async (event, imagePath, token) => {
+        // Ensure API key is set
+        const key = await (0, settings_1.getOpenAIKey)();
+        if (!key)
+            throw new Error('OpenAI API key not set');
+        const captioner = new OpenAICaptioner_1.OpenAICaptioner(key);
+        // Normalize file path: strip file:// or file: prefix if present
+        let filePathArg = imagePath;
+        try {
+            if (filePathArg.startsWith('file://')) {
+                filePathArg = url_1.default.fileURLToPath(filePathArg);
+            }
+            else if (filePathArg.startsWith('file:')) {
+                // Remove 'file:' and any leading slashes or backslashes
+                filePathArg = filePathArg.replace(/^file:[\\/]+/, '');
+            }
+        }
+        catch (e) {
+            console.warn('Could not parse file URL, using original path:', imagePath, e);
+        }
+        // Generate caption
+        const caption = await captioner.generateLoraCaption(filePathArg, token);
+        return caption;
     });
 };
 electron_1.app.on('ready', createWindow);

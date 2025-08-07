@@ -2,6 +2,10 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 let onFileDropCallback: ((filePath: string) => void) | null = null;
 
+console.log('Custom Preload Loaded:', Object.keys({
+  ...contextBridge ? {} : {}
+}));
+
 contextBridge.exposeInMainWorld('electronAPI', {
   onFileDrop: (callback: (filePath: string) => void) => {
     onFileDropCallback = callback;
@@ -28,7 +32,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   setSettings: (settings: any) => ipcRenderer.invoke('set-settings', settings),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
+  autoGenerateCaption: (imagePath: string, token: string) => ipcRenderer.invoke('auto-generate-caption', imagePath, token),
+  getOpenAIKey: () => ipcRenderer.invoke('get-openai-key'),
+  setOpenAIKey: (key: string) => ipcRenderer.invoke('set-openai-key', key),
 });
+
 
 // Global drop listener now directly invokes the callback
 window.addEventListener('drop', (e: DragEvent) => {

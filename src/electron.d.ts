@@ -14,6 +14,9 @@ declare global {
       getSettings: () => Promise<{ loraDataRoot: string }>;
       setSettings: (settings: { loraDataRoot: string }) => void;
       selectDirectory: () => Promise<string | null>;
+      getOpenAIKey: () => Promise<string | null>;
+      setOpenAIKey: (key: string) => Promise<boolean>;
+      autoGenerateCaption: (imagePath: string, token: string) => Promise<string>;
     };
   }
 }

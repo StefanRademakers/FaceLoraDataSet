@@ -5,6 +5,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSettings = getSettings;
 exports.saveSettings = saveSettings;
+exports.getOpenAIKey = getOpenAIKey;
+exports.setOpenAIKey = setOpenAIKey;
 const electron_1 = require("electron");
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
@@ -36,5 +38,27 @@ function saveSettings(settings) {
     }
     catch (error) {
         console.error('Error saving settings:', error);
+    }
+}
+// Securely store and retrieve OpenAI API key
+// @ts-ignore: keytar module may not have types
+const keytar = require('keytar');
+const serviceName = 'MediavibeFaceLoraDataSet';
+const accountName = 'openai_api_key';
+async function getOpenAIKey() {
+    try {
+        return await keytar.getPassword(serviceName, accountName);
+    }
+    catch (error) {
+        console.error('Error getting OpenAI API key:', error);
+        return null;
+    }
+}
+async function setOpenAIKey(key) {
+    try {
+        await keytar.setPassword(serviceName, accountName, key);
+    }
+    catch (error) {
+        console.error('Error setting OpenAI API key:', error);
     }
 }
