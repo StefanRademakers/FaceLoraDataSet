@@ -291,7 +291,7 @@ const createWindow = () => {
         return true;
     });
     // IPC handler for auto-generating captions via OpenAI
-    electron_1.ipcMain.handle('auto-generate-caption', async (event, imagePath, token) => {
+    electron_1.ipcMain.handle('auto-generate-caption', async (event, imagePath, token, subjectAddition) => {
         // Ensure API key is set
         const key = await (0, settings_1.getOpenAIKey)();
         if (!key)
@@ -304,15 +304,15 @@ const createWindow = () => {
                 filePathArg = url_1.default.fileURLToPath(filePathArg);
             }
             else if (filePathArg.startsWith('file:')) {
-                // Remove 'file:' and any leading slashes or backslashes
                 filePathArg = filePathArg.replace(/^file:[\\/]+/, '');
             }
         }
         catch (e) {
             console.warn('Could not parse file URL, using original path:', imagePath, e);
         }
+        console.log('Main: auto-generate-caption received:', { imagePath, token, subjectAddition });
         // Generate caption
-        const caption = await captioner.generateLoraCaption(filePathArg, token);
+        const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition);
         return caption;
     });
 };

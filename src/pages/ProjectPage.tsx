@@ -52,6 +52,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
     fullBodyClothesDescription: '',
     environmentDescription: '',
     loraTrigger: '',
+    subjectAddition: '',
   });
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
 
@@ -72,6 +73,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         fullBodyClothesDescription: result.data.descriptions?.fullBodyClothesDescription || '',
         environmentDescription: result.data.descriptions?.environmentDescription || '',
         loraTrigger: result.data.descriptions?.loraTrigger || '',
+        subjectAddition: result.data.descriptions?.subjectAddition || '',
       };
       setDescriptions(loadedDescriptions);
 
@@ -361,6 +363,18 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
               <div>
                 <TextField
                   fullWidth
+                  label="Subject Addition"
+                  variant="outlined"
+                  value={descriptions.subjectAddition}
+                  onChange={(e) => handleDescriptionChange('subjectAddition', e.target.value)}
+                  onBlur={() => saveProject()}
+                  sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' } }}
+                  InputLabelProps={{ style: { color: '#90caf9' } }}
+                />
+              </div>
+              <div>
+                <TextField
+                  fullWidth
                   label="Lora Trigger"
                   variant="outlined"
                   value={descriptions.loraTrigger}
@@ -377,6 +391,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                   title={title}
                   cols={gridConfigs[title].cols}
                   loraTrigger={descriptions.loraTrigger}
+                  subjectAddition={descriptions.subjectAddition}
                   images={images}
                   onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
                   onClickImage={handleClickImage}

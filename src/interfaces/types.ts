@@ -21,6 +21,7 @@ export interface ProjectData {
 // Settings interface for app settings page
 export interface AppSettings {
   loraDataRoot: string;
+  aiToolkitDatasetsPath: string;
 }
 
 export interface GridSectionProps {

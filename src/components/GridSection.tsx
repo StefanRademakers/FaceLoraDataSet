@@ -10,6 +10,7 @@ interface GridSectionProps {
   cols: number;
   // LoRA trigger token for auto captioning
   loraTrigger: string;
+  subjectAddition: string;
   images: (ImageSlot | null)[];
   onDropImage: (slotIndex: number, filePath: string) => void;
   onClickImage: (imagePath: string) => void;
@@ -17,7 +18,7 @@ interface GridSectionProps {
   showCaptions: boolean;
 }
 
-const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, images, onClickImage, onCaptionChange, showCaptions }) => {
+const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, subjectAddition, images, onClickImage, onCaptionChange, showCaptions }) => {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
@@ -56,7 +57,8 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, ima
                     <InputAdornment position="end">
                       <IconButton
                         onClick={() => {
-                          window.electronAPI.autoGenerateCaption(imageSlot.path, loraTrigger)
+                          console.log('GridSection: autoGenerateCaption args:', { path: imageSlot.path, loraTrigger, subjectAddition });
+                          window.electronAPI.autoGenerateCaption(imageSlot.path, loraTrigger, subjectAddition)
                             .then((caption: string) => onCaptionChange(index, caption))
                             .catch((err: any) => console.error('Auto-generate error:', err));
                         }}

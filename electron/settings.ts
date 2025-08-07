@@ -4,6 +4,7 @@ import fs from 'fs';
 
 export interface AppSettings {
   loraDataRoot: string;
+  aiToolkitDatasetsPath: string;
   // Note: OpenAI API key is stored securely via keytar, not in this JSON
 }
 
@@ -11,13 +12,15 @@ const settingsFilePath = path.join(app.getPath('userData'), 'loradataset_setting
 
 const defaultSettings: AppSettings = {
   loraDataRoot: path.join(app.getPath('home'), 'LoraData'),
+  aiToolkitDatasetsPath: 'D:\\ai-toolkit\\datasets',
 };
 
 export function getSettings(): AppSettings {
   try {
     if (fs.existsSync(settingsFilePath)) {
       const settingsJson = fs.readFileSync(settingsFilePath, 'utf-8');
-      return JSON.parse(settingsJson);
+      const stored = JSON.parse(settingsJson);
+      return { ...defaultSettings, ...stored };
     } else {
       // Create the file with default settings if it doesn't exist
       fs.writeFileSync(settingsFilePath, JSON.stringify(defaultSettings, null, 2));

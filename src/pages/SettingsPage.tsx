@@ -23,6 +23,15 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
       if (key) setOpenAIKey(key);
     });
   }, []);
+  
+  const handleSelectAiToolkit = async () => {
+    const newPath = await window.electronAPI.selectDirectory();
+    if (newPath && settings) {
+      const newSettings = { ...settings, aiToolkitDatasetsPath: newPath };
+      setSettings(newSettings);
+      window.electronAPI.setSettings(newSettings);
+    }
+  };
 
   const handleSelectDirectory = async () => {
     const newPath = await window.electronAPI.selectDirectory();
@@ -88,6 +97,35 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
               variant="contained"
               color="primary"
               onClick={handleSelectDirectory}
+              sx={{ fontWeight: 600 }}
+            >
+              Browse
+            </Button>
+          </div>
+        </Paper>
+        <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#282c34', borderRadius: 2 }}>
+          <Typography variant="subtitle1" sx={{ color: 'white', mb: 2 }}>
+            AI Toolkit Datasets Directory
+          </Typography>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <TextField
+              fullWidth
+              label="AI Toolkit Datasets Path"
+              value={settings.aiToolkitDatasetsPath}
+              InputProps={{ readOnly: true }}
+              variant="outlined"
+              sx={{
+                mr: 2,
+                input: { color: 'white' },
+                label: { color: '#90caf9' },
+                '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } }
+              }}
+              InputLabelProps={{ style: { color: '#90caf9' } }}
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSelectAiToolkit}
               sx={{ fontWeight: 600 }}
             >
               Browse

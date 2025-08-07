@@ -16,7 +16,7 @@ declare global {
       selectDirectory: () => Promise<string | null>;
       getOpenAIKey: () => Promise<string | null>;
       setOpenAIKey: (key: string) => Promise<boolean>;
-      autoGenerateCaption: (imagePath: string, token: string) => Promise<string>;
+      autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string) => Promise<string>;
     };
   }
 }

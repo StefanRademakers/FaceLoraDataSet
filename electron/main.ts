@@ -307,7 +307,7 @@ ipcMain.handle('set-openai-key', async (event, key: string) => {
   return true;
 });
 // IPC handler for auto-generating captions via OpenAI
-ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: string) => {
+ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: string, subjectAddition: string) => {
   // Ensure API key is set
   const key = await getOpenAIKey();
   if (!key) throw new Error('OpenAI API key not set');
@@ -318,14 +318,14 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
     if (filePathArg.startsWith('file://')) {
       filePathArg = url.fileURLToPath(filePathArg);
     } else if (filePathArg.startsWith('file:')) {
-      // Remove 'file:' and any leading slashes or backslashes
       filePathArg = filePathArg.replace(/^file:[\\/]+/, '');
     }
   } catch (e) {
     console.warn('Could not parse file URL, using original path:', imagePath, e);
   }
+  console.log('Main: auto-generate-caption received:', { imagePath, token, subjectAddition });
   // Generate caption
-  const caption = await captioner.generateLoraCaption(filePathArg, token);
+  const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition);
   return caption;
 });
 };
