@@ -38,6 +38,12 @@ interface ProjectPageProps {
   onGoToLanding: () => void;
 }
 
+const defaultPromptTemplate = `You are an AI assistant preparing training captions for a LoRA dataset.
+This is a photo of {{token}}{{addition}}. Analyze it in detail and return a single, 
+high-quality caption describing the visual features of the person, facial features, clothing, age and their setting - suitable for LoRA training. 
+Use "{{token}}" as the subject placeholder.
+Only return the caption. Do not include any explanation or punctuation outside the caption itself.`;
+
 const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectName, onGoToLanding }) => {
   const [projectName, setProjectName] = useState(initialProjectName);
   const [grids, setGrids] = useState<Record<string, (ImageSlot | null)[]>>(initialGrids);
@@ -55,6 +61,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
     loraTrigger: '',
     subjectAddition: '',
   });
+  const [promptTemplate, setPromptTemplate] = useState<string>(defaultPromptTemplate);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
 
   const stateRef = useRef({ projectName, grids });
@@ -89,7 +96,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         });
       }
       setGrids(absolutePathGrids);
-      setIsProjectLoaded(true);
+  setPromptTemplate(result.data.promptTemplate || defaultPromptTemplate);
+  setIsProjectLoaded(true);
     } else {
       console.error('Failed to load project:', result);
     }
@@ -105,6 +113,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         projectName,
         grids,
         descriptions,
+        promptTemplate,
       });
       if (result.success) {
         console.log('Project saved to', result.path);
@@ -132,6 +141,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
               projectName: currentProjectName,
               grids: newGrids,
               descriptions,
+              promptTemplate,
             };
             window.electronAPI.saveProject(stateToSave);
 
@@ -229,6 +239,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
           projectName,
           grids: newGrids,
           descriptions,
+          promptTemplate,
         };
         window.electronAPI.saveProject(stateToSave);
       }
@@ -243,6 +254,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         projectName,
         grids,
         descriptions: updatedDescriptions,
+        promptTemplate,
       };
       window.electronAPI.saveProject(stateToSave);
       return updatedDescriptions;
@@ -255,6 +267,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       projectName,
       grids,
       descriptions,
+      promptTemplate,
     };
     window.electronAPI.saveProject(stateToSave);
   };
@@ -282,7 +295,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
   const handleExportToAiToolkit = async () => {
     const exportGrids = convertGridsForExport(grids);
     try {
-      await window.electronAPI.exportToAiToolkit(projectName, exportGrids);
+  await window.electronAPI.exportToAiToolkit(projectName, exportGrids);
       console.log('Export to ai-toolkit completed');
     } catch (err) {
       console.error('Export to ai-toolkit error:', err);
@@ -403,6 +416,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                   cols={gridConfigs[title].cols}
                   loraTrigger={descriptions.loraTrigger}
                   subjectAddition={descriptions.subjectAddition}
+                  promptTemplate={promptTemplate}
                   images={images}
                   onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
                   onClickImage={handleClickImage}
@@ -424,6 +438,17 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
             descriptions={descriptions}
             onDescriptionChange={handleDescriptionChange}
             onBlur={saveProject}
+            promptTemplate={promptTemplate}
+            onPromptTemplateChange={(val) => {
+              setPromptTemplate(val);
+              // Immediate save with updated template
+              window.electronAPI.saveProject({
+                projectName,
+                grids,
+                descriptions,
+                promptTemplate: val,
+              });
+            }}
           />
         ) : (
           // Export Section
@@ -431,6 +456,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
             <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 2 }}>
               Export Options
             </Typography>
+            {/* Global resize option now handled in Settings. Images will be limited to 1024x1024 when enabled there. */}
             <Button
               onClick={handleExportToPDF}
               variant="contained"

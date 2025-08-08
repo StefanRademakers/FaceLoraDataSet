@@ -15,13 +15,17 @@ class OpenAICaptioner {
     constructor(apiKey) {
         this.apiKey = apiKey;
     }
-    buildPrompt(token, subjectAddition = '') {
-        const addition = subjectAddition.trim();
-        return `You are an AI assistant preparing training captions for a LoRA dataset.
-This is a photo of ${token}${addition ? ' ' + addition : ''}. Analyze it in detail and return a single, 
+    buildPrompt(token, subjectAddition = '', template) {
+        const defaultTemplate = `You are an AI assistant preparing training captions for a LoRA dataset.
+This is a photo of {{token}}{{addition}}. Analyze it in detail and return a single, 
 high-quality caption describing the visual features of the person, facial features, clothing, age and their setting - suitable for LoRA training. 
-Use "${token}" as the subject placeholder.
+Use "{{token}}" as the subject placeholder.
 Only return the caption. Do not include any explanation or punctuation outside the caption itself.`;
+        const addition = subjectAddition.trim() ? ' ' + subjectAddition.trim() : '';
+        const active = (template && template.trim().length > 0 ? template : defaultTemplate)
+            .replace(/{{token}}/g, token)
+            .replace(/{{addition}}/g, addition);
+        return active;
     }
     // Resize image to 512x512 and encode as base64 JPEG
     async resizeAndEncodeImage(imagePath) {
@@ -32,16 +36,16 @@ Only return the caption. Do not include any explanation or punctuation outside t
         return buffer.toString('base64');
     }
     // add a method to disable the caching system
-    async generateLoraCaption(imagePath, token, subjectAddition = '', enableCaching = false) {
+    async generateLoraCaption(imagePath, token, subjectAddition = '', enableCaching = false, promptTemplate) {
         // Resize and encode image for faster upload
         const base64Image = await this.resizeAndEncodeImage(imagePath);
-        const prompt = this.buildPrompt(token, subjectAddition);
+        const prompt = this.buildPrompt(token, subjectAddition, promptTemplate);
         console.log('Generated prompt:', prompt);
         // Simple cache to avoid duplicate requests
         const cacheDir = path_1.default.join(os_1.default.homedir(), '.facelora_caption_cache');
         if (!fs_1.default.existsSync(cacheDir))
             fs_1.default.mkdirSync(cacheDir, { recursive: true });
-        const hash = crypto_1.default.createHash('md5').update(imagePath + '|' + token + '|' + subjectAddition).digest('hex');
+        const hash = crypto_1.default.createHash('md5').update(imagePath + '|' + token + '|' + subjectAddition + '|' + (promptTemplate || '')).digest('hex');
         const cacheFile = path_1.default.join(cacheDir, `${hash}.txt`);
         if (enableCaching && fs_1.default.existsSync(cacheFile)) {
             return (await fs_1.default.promises.readFile(cacheFile, 'utf-8')).trim();

@@ -7,6 +7,8 @@ import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 interface SettingsPageProps {
@@ -131,6 +133,26 @@ const SettingsPage: React.FC<SettingsPageProps> = ({ onGoBack }) => {
               Browse
             </Button>
           </div>
+        </Paper>
+        <Paper elevation={2} sx={{ p: 3, mb: 4, bgcolor: '#282c34', borderRadius: 2 }}>
+          <Typography variant="subtitle1" sx={{ color: 'white', mb: 1 }}>
+            Export Options
+          </Typography>
+          <FormControlLabel
+            control={
+              <Switch
+                checked={settings.resizeExportImages !== false}
+                onChange={() => {
+                  const currentEnabled = settings.resizeExportImages !== false; // default true
+                  const newSettings = { ...settings, resizeExportImages: !currentEnabled };
+                  setSettings(newSettings);
+                  window.electronAPI.setSettings(newSettings);
+                }}
+              />
+            }
+            label="Limit exported images to max 1024x1024 (preserve aspect ratio)"
+            sx={{ color: 'white' }}
+          />
         </Paper>
         <div style={{ marginBottom: 16 }}>
           <TextField

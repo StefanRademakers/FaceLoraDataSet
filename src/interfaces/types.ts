@@ -22,6 +22,7 @@ export interface ProjectData {
 export interface AppSettings {
   loraDataRoot: string;
   aiToolkitDatasetsPath: string;
+  resizeExportImages?: boolean;
 }
 
 export interface GridSectionProps {

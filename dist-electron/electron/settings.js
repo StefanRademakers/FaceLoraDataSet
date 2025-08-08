@@ -14,6 +14,7 @@ const settingsFilePath = path_1.default.join(electron_1.app.getPath('userData'),
 const defaultSettings = {
     loraDataRoot: path_1.default.join(electron_1.app.getPath('home'), 'LoraData'),
     aiToolkitDatasetsPath: 'D:\\ai-toolkit\\datasets',
+    resizeExportImages: true,
 };
 function getSettings() {
     try {

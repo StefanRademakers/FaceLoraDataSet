@@ -32,9 +32,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getSettings: () => ipcRenderer.invoke('get-settings'),
   setSettings: (settings: any) => ipcRenderer.invoke('set-settings', settings),
   selectDirectory: () => ipcRenderer.invoke('select-directory'),
-  autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string) => {
-    console.log('Preload: autoGenerateCaption args:', { imagePath, token, subjectAddition });
-    return ipcRenderer.invoke('auto-generate-caption', imagePath, token, subjectAddition);
+  autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string, promptTemplate?: string) => {
+    console.log('Preload: autoGenerateCaption args:', { imagePath, token, subjectAddition, hasTemplate: !!promptTemplate });
+    return ipcRenderer.invoke('auto-generate-caption', imagePath, token, subjectAddition, promptTemplate);
   },
   exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => {
     console.log('Preload: exportToAiToolkit args:', { projectName, grids });

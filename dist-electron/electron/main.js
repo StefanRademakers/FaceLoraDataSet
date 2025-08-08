@@ -291,7 +291,7 @@ const createWindow = () => {
         return true;
     });
     // IPC handler for auto-generating captions via OpenAI
-    electron_1.ipcMain.handle('auto-generate-caption', async (event, imagePath, token, subjectAddition) => {
+    electron_1.ipcMain.handle('auto-generate-caption', async (event, imagePath, token, subjectAddition, promptTemplate) => {
         // Ensure API key is set
         const key = await (0, settings_1.getOpenAIKey)();
         if (!key)
@@ -310,9 +310,9 @@ const createWindow = () => {
         catch (e) {
             console.warn('Could not parse file URL, using original path:', imagePath, e);
         }
-        console.log('Main: auto-generate-caption received:', { imagePath, token, subjectAddition });
+        console.log('Main: auto-generate-caption received:', { imagePath, token, subjectAddition, hasTemplate: !!promptTemplate });
         // Generate caption
-        const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition);
+        const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition, false, promptTemplate);
         return caption;
     });
     // IPC handler for exporting to AI Toolkit datasets folder
@@ -323,6 +323,9 @@ const createWindow = () => {
         const targetDir = path_1.default.join(toolkitRoot, projectName);
         // Create target directory
         await fs_1.default.promises.mkdir(targetDir, { recursive: true });
+        const doResize = settings.resizeExportImages !== false; // default true
+        const maxWidth = 1024;
+        const maxHeight = 1024;
         // Copy each image and write captions
         for (const images of Object.values(grids)) {
             for (const img of images) {
@@ -335,7 +338,37 @@ const createWindow = () => {
                     }
                     const filename = path_1.default.basename(src);
                     const destImage = path_1.default.join(targetDir, filename);
-                    await fs_1.default.promises.copyFile(src, destImage);
+                    if (doResize) {
+                        try {
+                            const sharp = require('sharp');
+                            const image = sharp(src);
+                            const metadata = await image.metadata();
+                            const origW = metadata.width || 0;
+                            const origH = metadata.height || 0;
+                            let newW = origW;
+                            let newH = origH;
+                            if (origW > maxWidth || origH > maxHeight) {
+                                const widthRatio = maxWidth / origW;
+                                const heightRatio = maxHeight / origH;
+                                const scale = Math.min(widthRatio, heightRatio);
+                                newW = Math.floor(origW * scale);
+                                newH = Math.floor(origH * scale);
+                            }
+                            if (newW !== origW || newH !== origH) {
+                                await image.resize(newW, newH, { fit: 'inside', withoutEnlargement: true }).toFile(destImage);
+                            }
+                            else {
+                                await fs_1.default.promises.copyFile(src, destImage);
+                            }
+                        }
+                        catch (re) {
+                            console.warn('Resize failed, copying original:', re);
+                            await fs_1.default.promises.copyFile(src, destImage);
+                        }
+                    }
+                    else {
+                        await fs_1.default.promises.copyFile(src, destImage);
+                    }
                     if (img.caption && img.caption.trim()) {
                         const txtName = filename.replace(/\.[^.]+$/, '.txt');
                         const destText = path_1.default.join(targetDir, txtName);

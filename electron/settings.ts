@@ -6,6 +6,7 @@ export interface AppSettings {
   loraDataRoot: string;
   aiToolkitDatasetsPath: string;
   // Note: OpenAI API key is stored securely via keytar, not in this JSON
+  resizeExportImages?: boolean; // whether to resize images on ai-toolkit export (max 1024x1024)
 }
 
 const settingsFilePath = path.join(app.getPath('userData'), 'loradataset_settings.json');
@@ -13,6 +14,7 @@ const settingsFilePath = path.join(app.getPath('userData'), 'loradataset_setting
 const defaultSettings: AppSettings = {
   loraDataRoot: path.join(app.getPath('home'), 'LoraData'),
   aiToolkitDatasetsPath: 'D:\\ai-toolkit\\datasets',
+  resizeExportImages: true,
 };
 
 export function getSettings(): AppSettings {
