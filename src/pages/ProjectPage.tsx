@@ -19,17 +19,17 @@ import FolderCopyIcon from '@mui/icons-material/FolderCopy';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
-  'Close Up Head Emotions': Array(8).fill(null),
-  'Medium Head Shots': Array(8).fill(null),
-  'Wide Character Shots': Array(8).fill(null),
-  'Additional Images': Array(20).fill(null),
+  'Close Up Head Emotions': Array(15).fill(null),
+  'Medium Head Shots': Array(15).fill(null),
+  'Wide Character Shots': Array(15).fill(null),
+  'Additional Images': Array(40).fill(null),
 };
 
 const gridConfigs: Record<string, { cols: number }> = {
   'Close Up Head Rotations': { cols: 5 },
-  'Close Up Head Emotions': { cols: 4 },
-  'Medium Head Shots': { cols: 4 },
-  'Wide Character Shots': { cols: 4 },
+  'Close Up Head Emotions': { cols: 5 },
+  'Medium Head Shots': { cols: 5 },
+  'Wide Character Shots': { cols: 5 },
   'Additional Images': { cols: 5 },
 };
 
