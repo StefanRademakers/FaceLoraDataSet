@@ -4,6 +4,8 @@ import fs from 'fs';
 import url from 'url';
 import { OpenAICaptioner } from '../src/utils/OpenAICaptioner';
 import { getSettings, saveSettings, getOpenAIKey, setOpenAIKey } from './settings';
+import { AppState, DEFAULT_APP_STATE } from '../src/interfaces/AppState';
+import { toRelativeGrids, toAbsoluteGrids } from '../src/utils/pathTransforms';
 
 let settings = getSettings();
 
@@ -78,31 +80,17 @@ const createWindow = () => {
   }
 
   // IPC handler to save project state
-  ipcMain.handle('save-project', async (event, projectData: { projectName: string; grids: Record<string, (any | null)[]>; descriptions: Record<string, string>; promptTemplate?: string }) => {
-    const projectPath = path.join(getLoraDataRoot(), projectData.projectName);
+  ipcMain.handle('save-project', async (event, appState: AppState) => {
+    const projectPath = path.join(getLoraDataRoot(), appState.projectName);
     if (!fs.existsSync(projectPath)) {
       fs.mkdirSync(projectPath, { recursive: true });
     }
-
-    // When saving, convert image paths to be relative to the project folder
-    const relativePathGrids = JSON.parse(JSON.stringify(projectData.grids)); // Deep copy
-    for (const section in relativePathGrids) {
-      relativePathGrids[section] = relativePathGrids[section].map((imageSlot: { path: string; caption: string } | null) => {
-        if (imageSlot && imageSlot.path && imageSlot.path.startsWith('file://')) {
-          const filePath = url.fileURLToPath(imageSlot.path);
-          const relativePath = path.relative(projectPath, filePath);
-          return { ...imageSlot, path: relativePath.replace(/\\/g, '/') };
-        }
-        // If it's already a relative path or some other format, keep it as is
-        return imageSlot;
-      });
-    }
-
-    const dataToSave = {
-      ...projectData,
+  // Convert image paths to be relative to the project folder
+  const relativePathGrids = toRelativeGrids(appState.grids as any, projectPath);
+    const dataToSave: AppState = {
+      ...appState,
       grids: relativePathGrids,
     };
-
     const savePath = path.join(projectPath, 'project.json');
     try {
       fs.writeFileSync(savePath, JSON.stringify(dataToSave, null, 2));
@@ -116,56 +104,30 @@ const createWindow = () => {
 
   // IPC handler to load project state
   ipcMain.handle('load-project', async (event, projectName) => {
+    let data: AppState = { ...DEFAULT_APP_STATE };
+    let projectFilePath = '';
     if (projectName) {
-      try {
-        const projectFilePath = path.join(getLoraDataRoot(), projectName, 'project.json');
-        const projectDir = path.dirname(projectFilePath);
-        const data = JSON.parse(fs.readFileSync(projectFilePath, 'utf-8'));
-
-        // Convert relative image names back to absolute paths for rendering
-        for (const section in data.grids) {
-          data.grids[section] = data.grids[section].map((imageSlot: { path: string; caption: string } | null) => {
-            if (imageSlot && imageSlot.path) {
-              const absolutePath = path.join(projectDir, imageSlot.path);
-              return { ...imageSlot, path: absolutePath };
-            }
-            return imageSlot;
-          });
-        }
-  return { success: true, data };
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        console.error('Failed to load project:', error);
-        return { success: false, error: message };
+      projectFilePath = path.join(getLoraDataRoot(), projectName, 'project.json');
+    } else {
+      // Fallback to opening a file dialog if no project name is provided
+      const result = await dialog.showOpenDialog({
+        title: 'Load Lora DataSet Project',
+        defaultPath: getLoraDataRoot(),
+        properties: ['openFile'],
+        filters: [{ name: 'Project Files', extensions: ['json'] }],
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { success: false };
       }
+      projectFilePath = result.filePaths[0];
     }
-
-    // Fallback to opening a file dialog if no project name is provided
-    const result = await dialog.showOpenDialog({
-      title: 'Load Lora DataSet Project',
-      defaultPath: getLoraDataRoot(),
-      properties: ['openFile'],
-      filters: [{ name: 'Project Files', extensions: ['json'] }],
-    });
-
-    if (result.canceled || result.filePaths.length === 0) {
-      return { success: false };
-    }
-
-    const projectFilePath = result.filePaths[0];
     try {
       const projectDir = path.dirname(projectFilePath);
-      const data = JSON.parse(fs.readFileSync(projectFilePath, 'utf-8'));
-
-      // Convert relative image names back to absolute paths for rendering
-      for (const section in data.grids) {
-        data.grids[section] = data.grids[section].map((imageName: string | null) => {
-          if (imageName) {
-            return path.join(projectDir, imageName);
-          }
-          return null;
-        });
-      }
+      const loaded = JSON.parse(fs.readFileSync(projectFilePath, 'utf-8'));
+      // Patch missing fields with defaults
+      data = { ...DEFAULT_APP_STATE, ...loaded };
+  // Convert relative image names back to absolute paths for rendering
+  data.grids = toAbsoluteGrids(data.grids as any, projectDir) as any;
       return { success: true, data };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -329,7 +291,7 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
   return caption;
 });
   // IPC handler for exporting to AI Toolkit datasets folder
-  ipcMain.handle('export-to-ai-toolkit', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>) => {
+  ipcMain.handle('export-to-ai-toolkit', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>, appState?: AppState) => {
     // Load updated settings
     settings = getSettings();
     const toolkitRoot = settings.aiToolkitDatasetsPath;
@@ -395,6 +357,15 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
         }
       }
     }
+    // Write project.json with meta if provided
+    try {
+      if (appState) {
+        const jsonPath = path.join(targetDir, 'project.json');
+        await fs.promises.writeFile(jsonPath, JSON.stringify(appState, null, 2), 'utf-8');
+      }
+    } catch (e) {
+      console.warn('Failed to write project.json to ai-toolkit export:', e);
+    }
     // Open the exported folder in the system file explorer (Windows / cross-platform)
     try {
       await shell.openPath(targetDir);
@@ -404,20 +375,19 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
   return { success: true, folderPath: targetDir };
   });
   // IPC handler to export backup zip into <loraDataRoot>/Backups/<ProjectName>/ProjectName_YYYY-MM-DD_HH-MM-SS.zip
-  ipcMain.handle('export-backup-zip', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>, descriptions: any) => {
+  ipcMain.handle('export-backup-zip', async (event, appState: AppState) => {
     try {
       settings = getSettings();
       const loraRoot = settings.loraDataRoot;
-      const backupsDir = path.join(loraRoot, 'Backups', projectName);
+      const backupsDir = path.join(loraRoot, 'Backups', appState.projectName);
       await fs.promises.mkdir(backupsDir, { recursive: true });
       // Build zip in memory using JSZip
       const JSZip = require('jszip');
       const zip = new JSZip();
-  // Use shared utility for project.json
-  const { buildProjectJson } = require('../src/utils/buildProjectJson');
-  zip.file('project.json', buildProjectJson({ projectName, grids, descriptions }));
+  // Write full AppState as project.json
+  zip.file('project.json', JSON.stringify(appState, null, 2));
       // Collect images and captions
-      for (const images of Object.values(grids)) {
+      for (const images of Object.values(appState.grids)) {
         for (const img of images) {
           if (!img || !img.path) continue;
           try {
@@ -437,7 +407,7 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
       const now = new Date();
       const pad = (n: number) => n.toString().padStart(2, '0');
       const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-      const zipName = `${projectName || 'project'}_${stamp}.zip`;
+      const zipName = `${appState.projectName || 'project'}_${stamp}.zip`;
       const zipPath = path.join(backupsDir, zipName);
       const content = await zip.generateAsync({ type: 'nodebuffer' });
       await fs.promises.writeFile(zipPath, content);

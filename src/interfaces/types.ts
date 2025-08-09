@@ -10,6 +10,7 @@ export interface Descriptions {
   fullBodyClothesDescription: string;
   environmentDescription: string;
   loraTrigger: string;
+  subjectAddition: string;
 }
 
 export interface ProjectData {

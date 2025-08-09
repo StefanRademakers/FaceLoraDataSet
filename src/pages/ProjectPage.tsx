@@ -1,400 +1,84 @@
-import React, { useState, useEffect, useRef } from 'react';
-import GridSection from '../components/GridSection';
-import FullscreenViewer from '../components/FullscreenViewer';
 import TabBar from '../components/TabBar';
-import Descriptions from '../components/Descriptions';
-import { ImageSlot } from '../interfaces/types';
-import Switch from '@mui/material/Switch';
 import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
-import ArchiveIcon from '@mui/icons-material/Archive';
-import { exportImagesTabToPDF } from '../utils/exportPdf';
-import { convertGridsForExport } from '../utils/convertGridsForExport';
-import { exportProjectToZip } from '../utils/exportZip';
-import FolderCopyIcon from '@mui/icons-material/FolderCopy';
-import BackupIcon from '@mui/icons-material/Backup';
+import { useProjectPageState } from './ProjectPage/useProjectPageState';
+import ImagesTab from './ProjectPage/ImagesTab';
+import DescriptionsTab from './ProjectPage/DescriptionsTab';
+import ExportTab from './ProjectPage/ExportTab';
+import TrainLoraTab from './ProjectPage/TrainLoraTab';
 
-const initialGrids: Record<string, (ImageSlot | null)[]> = {
-  'Close Up Head Rotations': Array(15).fill(null),
-  'Close Up Head Emotions': Array(15).fill(null),
-  'Medium Head Shots': Array(15).fill(null),
-  'Wide Character Shots': Array(15).fill(null),
-  'Additional Images': Array(40).fill(null),
-};
-
-const gridConfigs: Record<string, { cols: number }> = {
-  'Close Up Head Rotations': { cols: 5 },
-  'Close Up Head Emotions': { cols: 5 },
-  'Medium Head Shots': { cols: 5 },
-  'Wide Character Shots': { cols: 5 },
-  'Additional Images': { cols: 5 },
-};
 
 interface ProjectPageProps {
   projectName: string;
   onGoToLanding: () => void;
 }
 
-const defaultPromptTemplate = `You are an AI assistant preparing training captions for a LoRA dataset.
-This is a photo of {{token}}{{addition}}. Analyze it in detail and return a single, 
-high-quality caption describing the visual features of the person, facial features, clothing, age and their setting - suitable for LoRA training. 
-Use "{{token}}" as the subject placeholder.
-Only return the caption. Do not include any explanation or punctuation outside the caption itself.`;
 
-const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectName, onGoToLanding }) => {
-  const [projectName, setProjectName] = useState(initialProjectName);
-  const [grids, setGrids] = useState<Record<string, (ImageSlot | null)[]>>(initialGrids);
-  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
-  const [allImages, setAllImages] = useState<string[]>([]);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
-  const [activeTab, setActiveTab] = useState<'images' | 'descriptions' | 'export'>('images');
-  const [showCaptions, setShowCaptions] = useState(true);
-  const [descriptions, setDescriptions] = useState({
-    notes: '',
-    faceImageDescription: '',
-    clothesImageDescription: '',
-    fullBodyClothesDescription: '',
-    environmentDescription: '',
-    loraTrigger: '',
-    subjectAddition: '',
-  });
-  const [promptTemplate, setPromptTemplate] = useState<string>(defaultPromptTemplate);
-  const [isProjectLoaded, setIsProjectLoaded] = useState(false);
+import React, { useState } from 'react';
+// ...existing imports...
 
-  const stateRef = useRef({ projectName, grids });
-  stateRef.current = { projectName, grids };
+const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding }) => {
+  const state = useProjectPageState(projectName);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
-  const dropTargetRef = useRef<{ section: string; index: number } | null>(null);
-
-  const loadProjectData = async (name?: string) => {
-    const result = await window.electronAPI.loadProject(name);
-    if (result.success && result.data) {
-      setProjectName(result.data.projectName);
-
-      const loadedDescriptions = {
-        notes: result.data.descriptions?.notes || '',
-        faceImageDescription: result.data.descriptions?.faceImageDescription || '',
-        clothesImageDescription: result.data.descriptions?.clothesImageDescription || '',
-        fullBodyClothesDescription: result.data.descriptions?.fullBodyClothesDescription || '',
-        environmentDescription: result.data.descriptions?.environmentDescription || '',
-        loraTrigger: result.data.descriptions?.loraTrigger || '',
-        subjectAddition: result.data.descriptions?.subjectAddition || '',
-      };
-      setDescriptions(loadedDescriptions);
-
-      const absolutePathGrids: Record<string, (ImageSlot | null)[]> = { ...initialGrids };
-      for (const section in result.data.grids) {
-        const mapped = result.data.grids[section].map((image: ImageSlot | null) => {
-          if (!image) return null;
-          const path = image.path.startsWith('file://') ? image.path : `file://${image.path.replace(/\\/g, '/')}`;
-          return { ...image, path };
-        });
-        const targetSize = section === 'Additional Images' ? 40 : 15;
-        if (mapped.length < targetSize) {
-          mapped.push(...Array(targetSize - mapped.length).fill(null));
-        }
-        absolutePathGrids[section] = mapped;
-      }
-      setGrids(absolutePathGrids);
-  setPromptTemplate(result.data.promptTemplate || defaultPromptTemplate);
-  setIsProjectLoaded(true);
-    } else {
-      console.error('Failed to load project:', result);
-    }
-  };
-
-  useEffect(() => {
-    loadProjectData(projectName);
-  }, [projectName]);
-
-  useEffect(() => {
-    const handleSave = async () => {
-      const result = await window.electronAPI.saveProject({
-        projectName,
-        grids,
-        descriptions,
-        promptTemplate,
-      });
-      if (result.success) {
-        console.log('Project saved to', result.path);
-      }
-    };
-
-    const handleGlobalDrop = async (filePath: string) => {
-      const currentDropTarget = dropTargetRef.current;
-      const currentProjectName = stateRef.current.projectName;
-
-      if (currentDropTarget && currentProjectName) {
-        const { section, index } = currentDropTarget;
-        const newFileName = `${section} ${index + 1}`;
-        const result = await window.electronAPI.copyImage(currentProjectName, filePath, newFileName);
-
-        if (result.success && result.path) {
-          setGrids((prevGrids) => {
-            const newGrids = { ...prevGrids };
-            const newImages = [...(newGrids[section] || [])];
-            const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}?t=${new Date().getTime()}` : '';
-            newImages[index] = { path: finalUrl, caption: '' }; // Create new ImageSlot
-            newGrids[section] = newImages;
-
-            const stateToSave = {
-              projectName: currentProjectName,
-              grids: newGrids,
-              descriptions,
-              promptTemplate,
-            };
-            window.electronAPI.saveProject(stateToSave);
-
-            return newGrids;
-          });
-        } else {
-          console.error("Failed to copy image:", result.error);
-        }
-        dropTargetRef.current = null;
-      }
-    };
-
-    const dragOverHandler = (e: DragEvent) => {
-        e.preventDefault();
-        const target = e.target as HTMLElement;
-        const sectionElement = target.closest('[data-section-title]');
-        const tileElement = target.closest('[data-tile-index]');
-
-        if (sectionElement && tileElement) {
-            const section = sectionElement.getAttribute('data-section-title');
-            const index = parseInt(tileElement.getAttribute('data-tile-index') || '0', 10);
-            if(section) {
-                dropTargetRef.current = { section, index };
-            }
-        }
-    };
-
-    const api = window.electronAPI;
-    const removeSaveListener = api.onMenuSave(handleSave);
-    const removeDropListener = api.onFileDrop(handleGlobalDrop);
-    window.addEventListener('dragover', dragOverHandler);
-
-    return () => {
-        removeSaveListener();
-        removeDropListener();
-        window.removeEventListener('dragover', dragOverHandler);
-    }
-  }, [projectName, grids, descriptions]);
-
-  const handleDropImage = (section: string, slotIndex: number, filePath: string) => {
-    setGrids((prevGrids) => {
-      const newGrids = { ...prevGrids };
-      const newImages = [...(newGrids[section] || [])];
-      newImages[slotIndex] = { path: filePath, caption: '' };
-      newGrids[section] = newImages;
-      return newGrids;
-    });
-  };
-
-  const handleClickImage = (imagePath: string) => {
-    const flatImages = Object.values(grids)
-      .flat()
-      .filter((img): img is ImageSlot => img !== null)
-      .map(img => img.path);
-    const index = flatImages.findIndex(path => path === imagePath);
-
-    setAllImages(flatImages);
-    setCurrentImageIndex(index);
-    setFullscreenImage(imagePath);
-  };
-
-  const handleCloseFullscreen = () => {
-    setFullscreenImage(null);
-    setAllImages([]);
-    setCurrentImageIndex(null);
-  };
-
-  const handleNextImage = () => {
-    if (allImages.length > 0 && currentImageIndex !== null) {
-      const nextIndex = (currentImageIndex + 1) % allImages.length;
-      setCurrentImageIndex(nextIndex);
-      setFullscreenImage(allImages[nextIndex]);
-    }
-  };
-
-  const handlePrevImage = () => {
-    if (allImages.length > 0 && currentImageIndex !== null) {
-      const prevIndex = (currentImageIndex - 1 + allImages.length) % allImages.length;
-      setCurrentImageIndex(prevIndex);
-      setFullscreenImage(allImages[prevIndex]);
-    }
-  };
-
-  const handleCaptionChange = (section: string, index: number, caption: string) => {
-    setGrids(prevGrids => {
-      const newGrids = { ...prevGrids };
-      const newImages = [...newGrids[section]];
-      const imageSlot = newImages[index];
-      if (imageSlot) {
-        newImages[index] = { ...imageSlot, caption };
-        newGrids[section] = newImages;
-
-        // Auto-save on caption change
-        const stateToSave = {
-          projectName,
-          grids: newGrids,
-          descriptions,
-          promptTemplate,
-        };
-        window.electronAPI.saveProject(stateToSave);
-      }
-      return newGrids;
-    });
-  };
-
-  const handleDescriptionChange = (field: string, value: string) => {
-    setDescriptions((prev) => {
-      const updatedDescriptions = { ...prev, [field]: value };
-      const stateToSave = {
-        projectName,
-        grids,
-        descriptions: updatedDescriptions,
-        promptTemplate,
-      };
-      window.electronAPI.saveProject(stateToSave);
-      return updatedDescriptions;
-    });
-  };
-
-  const saveProject = () => {
-    if (!isProjectLoaded) return;
-    const stateToSave = {
-      projectName,
-      grids,
-      descriptions,
-      promptTemplate,
-    };
-    window.electronAPI.saveProject(stateToSave);
-  };
-
+  // Wrap export handlers to show snackbar
   const handleExportToPDF = async () => {
-    const exportGrids = convertGridsForExport(grids);
-    await exportImagesTabToPDF({
-      projectName,
-      grids: exportGrids,
-      gridConfigs,
-      showCaptions,
-    });
+    await state.handleExportToPDF();
+    setSnackbarMessage('Exported to PDF');
+    setSnackbarOpen(true);
   };
-
   const handleExportToZip = async () => {
-    // Convert grids to export format (reuse the same as for PDF)
-    const exportGrids = convertGridsForExport(grids);
-    await exportProjectToZip({
-      projectName,
-      grids: exportGrids,
-      descriptions
-    });
+    await state.handleExportToZip();
+    setSnackbarMessage('Exported to Zip');
+    setSnackbarOpen(true);
   };
-  
   const handleExportToAiToolkit = async () => {
-    const exportGrids = convertGridsForExport(grids);
-    try {
-  await window.electronAPI.exportToAiToolkit(projectName, exportGrids);
-      console.log('Export to ai-toolkit completed');
-    } catch (err) {
-      console.error('Export to ai-toolkit error:', err);
-    }
+    await state.handleExportToAiToolkit();
+    setSnackbarMessage('Exported to ai-toolkit');
+    setSnackbarOpen(true);
   };
   const handleExportBackup = async () => {
-    const exportGrids = convertGridsForExport(grids);
-    try {
-      const res = await window.electronAPI.exportBackupZip(projectName, exportGrids, descriptions);
-      if (res.success) {
-        console.log('Backup zip created at', res.path);
-      } else {
-        console.error('Backup export failed:', res.error);
-      }
-    } catch (e) {
-      console.error('Backup export exception:', e);
-    }
+    await state.handleExportBackup();
+    setSnackbarMessage('Backup zip created');
+    setSnackbarOpen(true);
   };
-
-  const handleDeleteImage = (imagePath: string) => {
-    const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
-
-    setGrids((prevGrids) => {
-      const newGrids = { ...prevGrids };
-      let imageFound = false;
-      for (const section in newGrids) {
-        const imageIndex = newGrids[section].findIndex((img) => {
-          if (!img) return false;
-          const imgBaseName = img.path.split('?')[0];
-          const stateImgBaseName = imgBaseName.substring(imgBaseName.lastIndexOf('/') + 1);
-          return stateImgBaseName === baseNameToDelete;
-        });
-
-        if (imageIndex !== -1) {
-          newGrids[section][imageIndex] = null;
-          imageFound = true;
-          break;
-        }
-      }
-
-      if (imageFound) {
-        const stateToSave = {
-          projectName,
-          grids: newGrids,
-          descriptions,
-        };
-        window.electronAPI.saveProject(stateToSave);
-      }
-
-      return newGrids;
-    });
-
-    setAllImages((prevImages) =>
-      prevImages.filter((img) => {
-        const imgBaseName = img.substring(img.lastIndexOf('/') + 1).split('?')[0];
-        return imgBaseName !== baseNameToDelete;
-      })
-    );
-  };
+  const handleSnackbarClose = () => setSnackbarOpen(false);
 
   return (
     <>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#222', paddingTop: 0 }}>
         <TabBar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
+          activeTab={state.activeTab}
+          setActiveTab={state.setActiveTab}
           onGoToLanding={onGoToLanding}
         />
       </div>
       <div className="p-8">
-        {/* Project stats */}
-        {activeTab === 'images' && (
-          <div className="mb-4 text-sm text-gray-300">
-            {(() => {
-              let total = 0; let withCaption = 0;
-              for (const arr of Object.values(grids)) {
-                for (const slot of arr) {
-                  if (slot && slot.path) {
-                    total++;
-                    if (slot.caption && slot.caption.trim().length > 0) withCaption++;
+        {/* Only show project stats and controls on Images tab */}
+        {state.activeTab === 'images' && (
+          <>
+            <div className="mb-4 text-sm text-gray-300">
+              {(() => {
+                let total = 0; let withCaption = 0;
+                for (const arr of Object.values(state.appState.grids)) {
+                  for (const slot of arr) {
+                    if (slot && slot.path) {
+                      total++;
+                      if (slot.caption && slot.caption.trim().length > 0) withCaption++;
+                    }
                   }
                 }
-              }
-              return `Images: ${withCaption}/${total} captioned`;
-            })()}
-          </div>
-        )}
-        {activeTab === 'images' ? (
-          <>
+                return `Images: ${withCaption}/${total} captioned`;
+              })()}
+            </div>
             <div className="mb-4">
               <FormControlLabel
                 control={
                   <Switch
-                    checked={showCaptions}
-                    onChange={() => setShowCaptions(!showCaptions)}
+                    checked={state.showCaptions}
+                    onChange={() => state.setShowCaptions(!state.showCaptions)}
                     color="primary"
                   />
                 }
@@ -412,8 +96,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                   fullWidth
                   label="Project Name"
                   variant="outlined"
-                  value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
+                  value={state.appState.projectName}
+                  onChange={(e) => state.setAppState(prev => ({ ...prev, projectName: e.target.value }))}
                   sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' }, '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } } }}
                   InputLabelProps={{ style: { color: '#90caf9' } }}
                 />
@@ -423,9 +107,9 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                   fullWidth
                   label="Subject Addition"
                   variant="outlined"
-                  value={descriptions.subjectAddition}
-                  onChange={(e) => handleDescriptionChange('subjectAddition', e.target.value)}
-                  onBlur={() => saveProject()}
+                  value={state.appState.descriptions.subjectAddition}
+                  onChange={(e) => state.handleDescriptionChange('subjectAddition', e.target.value)}
+                  onBlur={() => state.saveProject()}
                   sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' } }}
                   InputLabelProps={{ style: { color: '#90caf9' } }}
                 />
@@ -435,114 +119,60 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                   fullWidth
                   label="Lora Trigger"
                   variant="outlined"
-                  value={descriptions.loraTrigger}
-                  onChange={(e) => handleDescriptionChange('loraTrigger', e.target.value)}
-                  onBlur={() => saveProject()}
+                  value={state.appState.descriptions.loraTrigger}
+                  onChange={(e) => state.handleDescriptionChange('loraTrigger', e.target.value)}
+                  onBlur={() => state.saveProject()}
                   sx={{ mb: 2, input: { color: 'white' }, label: { color: '#90caf9' }, '.MuiOutlinedInput-root': { '& fieldset': { borderColor: '#444' }, '&:hover fieldset': { borderColor: '#90caf9' } } }}
                   InputLabelProps={{ style: { color: '#90caf9' } }}
                 />
               </div>
             </div>
-            {Object.entries(grids).map(([sectionTitle, images]) => {
-              // Compute per-section stats (only count filled slots)
-              let total = 0; let withCaption = 0;
-              for (const slot of images) {
-                if (slot && slot.path) {
-                  total++;
-                  if (slot.caption && slot.caption.trim().length > 0) withCaption++;
-                }
-              }
-              const displayTitle = `${sectionTitle}: Images: ${withCaption}/${total} captioned`;
-              return (
-                <div key={sectionTitle} data-section-title={sectionTitle}>
-                  <GridSection
-                    title={displayTitle}
-                    cols={gridConfigs[sectionTitle].cols}
-                    loraTrigger={descriptions.loraTrigger}
-                    subjectAddition={descriptions.subjectAddition}
-                    promptTemplate={promptTemplate}
-                    images={images}
-                    onDropImage={(slotIndex: number, filePath: string) => handleDropImage(sectionTitle, slotIndex, filePath)}
-                    onClickImage={handleClickImage}
-                    onCaptionChange={(index, caption) => handleCaptionChange(sectionTitle, index, caption)}
-                    showCaptions={showCaptions}
-                  />
-                </div>
-              );
-            })}
-            <FullscreenViewer 
-              image={fullscreenImage || ''} 
-              onClose={handleCloseFullscreen}
-              onNext={handleNextImage}
-              onPrev={handlePrevImage}
-              onDeleteImage={handleDeleteImage}
-            />
           </>
-        ) : activeTab === 'descriptions' ? (
-          <Descriptions
-            descriptions={descriptions}
-            onDescriptionChange={handleDescriptionChange}
-            onBlur={saveProject}
-            promptTemplate={promptTemplate}
-            onPromptTemplateChange={(val) => {
-              setPromptTemplate(val);
-              // Immediate save with updated template
-              window.electronAPI.saveProject({
-                projectName,
-                grids,
-                descriptions,
-                promptTemplate: val,
-              });
-            }}
+        )}
+        {/* Tab content below */}
+        {state.activeTab === 'images' && (
+          <ImagesTab
+            appState={state.appState}
+            setAppState={state.setAppState}
+            showCaptions={state.showCaptions}
+            setShowCaptions={state.setShowCaptions}
+            fullscreenImage={state.fullscreenImage}
+            setFullscreenImage={state.setFullscreenImage}
+            allImages={state.allImages}
+            setAllImages={state.setAllImages}
+            currentImageIndex={state.currentImageIndex}
+            setCurrentImageIndex={state.setCurrentImageIndex}
+            handleDropImage={state.handleDropImage}
+            handleClickImage={state.handleClickImage}
+            handleCaptionChange={state.handleCaptionChange}
+            handleCloseFullscreen={state.handleCloseFullscreen}
+            handleNextImage={state.handleNextImage}
+            handlePrevImage={state.handlePrevImage}
+            handleDeleteImage={state.handleDeleteImage}
           />
-        ) : (
-          // Export Section
-          <Paper elevation={2} sx={{ p: 4, bgcolor: '#282c34', borderRadius: 2, maxWidth: 480, margin: '0 auto' }}>
-            <Typography variant="h5" sx={{ color: 'white', fontWeight: 700, mb: 2 }}>
-              Export Options
-            </Typography>
-            {/* Global resize option now handled in Settings. Images will be limited to 1024x1024 when enabled there. */}
-            <Button
-              onClick={handleExportToPDF}
-              variant="contained"
-              color="primary"
-              startIcon={<PictureAsPdfIcon />}
-              fullWidth
-              sx={{ mb: 2, fontWeight: 600 }}
-            >
-              Export to PDF
-            </Button>
-            <Button
-              onClick={handleExportToZip}
-              variant="contained"
-              color="primary"
-              startIcon={<ArchiveIcon />}
-              fullWidth
-              sx={{ fontWeight: 600 }}
-            >
-              Export to Zip
-            </Button>
-            <Button
-              onClick={handleExportToAiToolkit}
-              variant="contained"
-              color="primary"
-              startIcon={<FolderCopyIcon />}
-              fullWidth
-              sx={{ mt: 2, fontWeight: 600 }}
-            >
-              Export to ai-toolkit
-            </Button>
-            <Button
-              onClick={handleExportBackup}
-              variant="contained"
-              color="secondary"
-              startIcon={<BackupIcon />}
-              fullWidth
-              sx={{ mt: 2, fontWeight: 600 }}
-            >
-              Export to Backup
-            </Button>
-          </Paper>
+        )}
+        {state.activeTab === 'descriptions' && (
+          <DescriptionsTab
+            appState={state.appState}
+            setAppState={state.setAppState}
+            handleDescriptionChange={state.handleDescriptionChange}
+            saveProject={state.saveProject}
+          />
+        )}
+        {state.activeTab === 'export' && (
+          <ExportTab
+            appState={state.appState}
+            handleExportToPDF={handleExportToPDF}
+            handleExportToZip={handleExportToZip}
+            handleExportToAiToolkit={handleExportToAiToolkit}
+            handleExportBackup={handleExportBackup}
+            snackbarOpen={snackbarOpen}
+            snackbarMessage={snackbarMessage}
+            onSnackbarClose={handleSnackbarClose}
+          />
+        )}
+        {state.activeTab === 'train' && (
+          <TrainLoraTab appState={state.appState} />
         )}
       </div>
     </>

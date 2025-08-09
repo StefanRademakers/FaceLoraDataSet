@@ -1,60 +1,49 @@
-
 import JSZip from 'jszip';
-import { buildProjectJson } from './buildProjectJson';
+import { AppState } from '../interfaces/AppState';
 
-export async function exportProjectToZip({
-  projectName,
-  grids,
-  descriptions
-}: {
-  projectName: string;
-  grids: Record<string, { path: string; caption: string }[]>;
-  descriptions: any;
-}) {
+// Pure helper for tests: build a JSZip instance from AppState using an injected fetch function
+export async function buildZipFromAppState(
+  appState: AppState,
+  fetchFn: (url: string) => Promise<{ blob(): Promise<Blob> }>
+) {
   const zip = new JSZip();
-
-  // Add project JSON using shared utility
-  zip.file('project.json', buildProjectJson({ projectName, grids, descriptions }));
-
-  // Add images and captions (flattened, no subdirectories)
-  for (const images of Object.values(grids)) {
+  zip.file('project.json', JSON.stringify(appState, null, 2));
+  for (const images of Object.values(appState.grids)) {
     for (const img of images) {
       if (!img || !img.path) continue;
       try {
-        // Fetch image as blob
-        const response = await fetch(img.path);
-        const blob = await response.blob();
-        // Get filename from path
+        const response = await fetchFn(img.path);
+  const blob = await response.blob();
+  const buffer = await blob.arrayBuffer();
         const urlParts = img.path.split('/');
         const filename = urlParts[urlParts.length - 1].split('?')[0];
-        // Add image to zip root
-        zip.file(filename, blob);
-        // Add caption as .txt if present
+  zip.file(filename, new Uint8Array(buffer));
         if (img.caption && img.caption.trim()) {
-          zip.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption);
+          zip.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption.trim());
         }
       } catch {
-        // skip if fetch fails
+        // Skip if fetch fails
       }
     }
   }
+  zip.file('exported_at.txt', `Exported at: ${new Date().toISOString()}`);
+  return zip;
+}
 
-  // Add export timestamp file
+export async function exportProjectToZip(appState: AppState) {
+  const zip = await buildZipFromAppState(appState, (u) => fetch(u));
+  const content = await zip.generateAsync({ type: 'blob' });
+  const urlObj = URL.createObjectURL(content);
+  const a = document.createElement('a');
+  a.href = urlObj;
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, '0');
   const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-  zip.file('exported_at.txt', `Exported at: ${now.toISOString()}`);
-
-  // Generate zip and trigger download
-  const content = await zip.generateAsync({ type: 'blob' });
-  const url = URL.createObjectURL(content);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${projectName || 'project'}_${dateStr}.zip`;
+  a.download = `${appState.projectName || 'project'}_${dateStr}.zip`;
   document.body.appendChild(a);
   a.click();
   setTimeout(() => {
     document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    URL.revokeObjectURL(urlObj);
   }, 100);
 }

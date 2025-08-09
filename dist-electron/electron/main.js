@@ -9,6 +9,8 @@ const fs_1 = __importDefault(require("fs"));
 const url_1 = __importDefault(require("url"));
 const OpenAICaptioner_1 = require("../src/utils/OpenAICaptioner");
 const settings_1 = require("./settings");
+const AppState_1 = require("../src/interfaces/AppState");
+const pathTransforms_1 = require("../src/utils/pathTransforms");
 let settings = (0, settings_1.getSettings)();
 // Function to get the current loraDataRoot
 function getLoraDataRoot() {
@@ -76,26 +78,15 @@ const createWindow = () => {
         win.loadFile(indexPath);
     }
     // IPC handler to save project state
-    electron_1.ipcMain.handle('save-project', async (event, projectData) => {
-        const projectPath = path_1.default.join(getLoraDataRoot(), projectData.projectName);
+    electron_1.ipcMain.handle('save-project', async (event, appState) => {
+        const projectPath = path_1.default.join(getLoraDataRoot(), appState.projectName);
         if (!fs_1.default.existsSync(projectPath)) {
             fs_1.default.mkdirSync(projectPath, { recursive: true });
         }
-        // When saving, convert image paths to be relative to the project folder
-        const relativePathGrids = JSON.parse(JSON.stringify(projectData.grids)); // Deep copy
-        for (const section in relativePathGrids) {
-            relativePathGrids[section] = relativePathGrids[section].map((imageSlot) => {
-                if (imageSlot && imageSlot.path && imageSlot.path.startsWith('file://')) {
-                    const filePath = url_1.default.fileURLToPath(imageSlot.path);
-                    const relativePath = path_1.default.relative(projectPath, filePath);
-                    return { ...imageSlot, path: relativePath.replace(/\\/g, '/') };
-                }
-                // If it's already a relative path or some other format, keep it as is
-                return imageSlot;
-            });
-        }
+        // Convert image paths to be relative to the project folder
+        const relativePathGrids = (0, pathTransforms_1.toRelativeGrids)(appState.grids, projectPath);
         const dataToSave = {
-            ...projectData,
+            ...appState,
             grids: relativePathGrids,
         };
         const savePath = path_1.default.join(projectPath, 'project.json');
@@ -111,52 +102,31 @@ const createWindow = () => {
     });
     // IPC handler to load project state
     electron_1.ipcMain.handle('load-project', async (event, projectName) => {
+        let data = { ...AppState_1.DEFAULT_APP_STATE };
+        let projectFilePath = '';
         if (projectName) {
-            try {
-                const projectFilePath = path_1.default.join(getLoraDataRoot(), projectName, 'project.json');
-                const projectDir = path_1.default.dirname(projectFilePath);
-                const data = JSON.parse(fs_1.default.readFileSync(projectFilePath, 'utf-8'));
-                // Convert relative image names back to absolute paths for rendering
-                for (const section in data.grids) {
-                    data.grids[section] = data.grids[section].map((imageSlot) => {
-                        if (imageSlot && imageSlot.path) {
-                            const absolutePath = path_1.default.join(projectDir, imageSlot.path);
-                            return { ...imageSlot, path: absolutePath };
-                        }
-                        return imageSlot;
-                    });
-                }
-                return { success: true, data };
-            }
-            catch (error) {
-                const message = error instanceof Error ? error.message : String(error);
-                console.error('Failed to load project:', error);
-                return { success: false, error: message };
-            }
+            projectFilePath = path_1.default.join(getLoraDataRoot(), projectName, 'project.json');
         }
-        // Fallback to opening a file dialog if no project name is provided
-        const result = await electron_1.dialog.showOpenDialog({
-            title: 'Load Lora DataSet Project',
-            defaultPath: getLoraDataRoot(),
-            properties: ['openFile'],
-            filters: [{ name: 'Project Files', extensions: ['json'] }],
-        });
-        if (result.canceled || result.filePaths.length === 0) {
-            return { success: false };
+        else {
+            // Fallback to opening a file dialog if no project name is provided
+            const result = await electron_1.dialog.showOpenDialog({
+                title: 'Load Lora DataSet Project',
+                defaultPath: getLoraDataRoot(),
+                properties: ['openFile'],
+                filters: [{ name: 'Project Files', extensions: ['json'] }],
+            });
+            if (result.canceled || result.filePaths.length === 0) {
+                return { success: false };
+            }
+            projectFilePath = result.filePaths[0];
         }
-        const projectFilePath = result.filePaths[0];
         try {
             const projectDir = path_1.default.dirname(projectFilePath);
-            const data = JSON.parse(fs_1.default.readFileSync(projectFilePath, 'utf-8'));
+            const loaded = JSON.parse(fs_1.default.readFileSync(projectFilePath, 'utf-8'));
+            // Patch missing fields with defaults
+            data = { ...AppState_1.DEFAULT_APP_STATE, ...loaded };
             // Convert relative image names back to absolute paths for rendering
-            for (const section in data.grids) {
-                data.grids[section] = data.grids[section].map((imageName) => {
-                    if (imageName) {
-                        return path_1.default.join(projectDir, imageName);
-                    }
-                    return null;
-                });
-            }
+            data.grids = (0, pathTransforms_1.toAbsoluteGrids)(data.grids, projectDir);
             return { success: true, data };
         }
         catch (error) {
@@ -316,7 +286,7 @@ const createWindow = () => {
         return caption;
     });
     // IPC handler for exporting to AI Toolkit datasets folder
-    electron_1.ipcMain.handle('export-to-ai-toolkit', async (event, projectName, grids) => {
+    electron_1.ipcMain.handle('export-to-ai-toolkit', async (event, projectName, grids, appState) => {
         // Load updated settings
         settings = (0, settings_1.getSettings)();
         const toolkitRoot = settings.aiToolkitDatasetsPath;
@@ -387,6 +357,16 @@ const createWindow = () => {
                 }
             }
         }
+        // Write project.json with meta if provided
+        try {
+            if (appState) {
+                const jsonPath = path_1.default.join(targetDir, 'project.json');
+                await fs_1.default.promises.writeFile(jsonPath, JSON.stringify(appState, null, 2), 'utf-8');
+            }
+        }
+        catch (e) {
+            console.warn('Failed to write project.json to ai-toolkit export:', e);
+        }
         // Open the exported folder in the system file explorer (Windows / cross-platform)
         try {
             await electron_1.shell.openPath(targetDir);
@@ -397,18 +377,19 @@ const createWindow = () => {
         return { success: true, folderPath: targetDir };
     });
     // IPC handler to export backup zip into <loraDataRoot>/Backups/<ProjectName>/ProjectName_YYYY-MM-DD_HH-MM-SS.zip
-    electron_1.ipcMain.handle('export-backup-zip', async (event, projectName, grids, descriptions) => {
+    electron_1.ipcMain.handle('export-backup-zip', async (event, appState) => {
         try {
             settings = (0, settings_1.getSettings)();
             const loraRoot = settings.loraDataRoot;
-            const backupsDir = path_1.default.join(loraRoot, 'Backups', projectName);
+            const backupsDir = path_1.default.join(loraRoot, 'Backups', appState.projectName);
             await fs_1.default.promises.mkdir(backupsDir, { recursive: true });
             // Build zip in memory using JSZip
             const JSZip = require('jszip');
             const zip = new JSZip();
-            zip.file('project.json', JSON.stringify({ projectName, grids, descriptions }, null, 2));
+            // Write full AppState as project.json
+            zip.file('project.json', JSON.stringify(appState, null, 2));
             // Collect images and captions
-            for (const images of Object.values(grids)) {
+            for (const images of Object.values(appState.grids)) {
                 for (const img of images) {
                     if (!img || !img.path)
                         continue;
@@ -431,7 +412,7 @@ const createWindow = () => {
             const now = new Date();
             const pad = (n) => n.toString().padStart(2, '0');
             const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-            const zipName = `${projectName || 'project'}_${stamp}.zip`;
+            const zipName = `${appState.projectName || 'project'}_${stamp}.zip`;
             const zipPath = path_1.default.join(backupsDir, zipName);
             const content = await zip.generateAsync({ type: 'nodebuffer' });
             await fs_1.default.promises.writeFile(zipPath, content);

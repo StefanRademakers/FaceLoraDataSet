@@ -21,7 +21,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('menu-load', callback);
     return () => ipcRenderer.removeListener('menu-load', callback);
   },
-  saveProject: (state: any) => ipcRenderer.invoke('save-project', state),
+  saveProject: (appState: any) => ipcRenderer.invoke('save-project', appState),
   loadProject: (projectName?: string) => ipcRenderer.invoke('load-project', projectName),
   copyImage: (projectName: string, sourcePath: string, customFileName: string) => ipcRenderer.invoke('copy-image', projectName, sourcePath, customFileName),
   getProjects: () => ipcRenderer.invoke('get-projects'),
@@ -37,13 +37,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
     console.log('Preload: autoGenerateCaption args:', { imagePath, token, subjectAddition, hasTemplate: !!promptTemplate });
     return ipcRenderer.invoke('auto-generate-caption', imagePath, token, subjectAddition, promptTemplate);
   },
-  exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => {
+  exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>, appState: any) => {
     console.log('Preload: exportToAiToolkit args:', { projectName, grids });
-    return ipcRenderer.invoke('export-to-ai-toolkit', projectName, grids);
+    return ipcRenderer.invoke('export-to-ai-toolkit', projectName, grids, appState);
   },
-  exportBackupZip: (projectName: string, grids: Record<string, { path: string; caption: string }[]>, descriptions: any) => {
-    console.log('Preload: exportBackupZip args:', { projectName, grids });
-    return ipcRenderer.invoke('export-backup-zip', projectName, grids, descriptions);
+  exportBackupZip: (appState: any) => {
+    console.log('Preload: exportBackupZip args:', appState);
+    return ipcRenderer.invoke('export-backup-zip', appState);
   },
   openFolderInExplorer: (folderPath: string) => ipcRenderer.invoke('open-folder-in-explorer', folderPath),
   getOpenAIKey: () => ipcRenderer.invoke('get-openai-key'),
