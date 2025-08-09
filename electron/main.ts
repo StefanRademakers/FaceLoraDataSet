@@ -333,9 +333,16 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
     // Load updated settings
     settings = getSettings();
     const toolkitRoot = settings.aiToolkitDatasetsPath;
-    const targetDir = path.join(toolkitRoot, projectName);
-    // Create target directory
-    await fs.promises.mkdir(targetDir, { recursive: true });
+  // Base directory for project exports
+  const projectRootDir = path.join(toolkitRoot, projectName);
+  await fs.promises.mkdir(projectRootDir, { recursive: true });
+  // Timestamped subdirectory (same pattern as zip exports)
+  const now = new Date();
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const stampedDirName = `${projectName}_${dateStr}`;
+  const targetDir = path.join(projectRootDir, stampedDirName);
+  await fs.promises.mkdir(targetDir, { recursive: true });
   const doResize = settings.resizeExportImages !== false; // default true
   const maxWidth = 1024;
   const maxHeight = 1024;
@@ -394,7 +401,51 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
     } catch (e) {
       console.warn('Could not auto-open exported folder:', e);
     }
-    return { success: true, folderPath: targetDir };
+  return { success: true, folderPath: targetDir };
+  });
+  // IPC handler to export backup zip into <loraDataRoot>/Backups/<ProjectName>/ProjectName_YYYY-MM-DD_HH-MM-SS.zip
+  ipcMain.handle('export-backup-zip', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>, descriptions: any) => {
+    try {
+      settings = getSettings();
+      const loraRoot = settings.loraDataRoot;
+      const backupsDir = path.join(loraRoot, 'Backups', projectName);
+      await fs.promises.mkdir(backupsDir, { recursive: true });
+      // Build zip in memory using JSZip
+      const JSZip = require('jszip');
+      const zip = new JSZip();
+  // Use shared utility for project.json
+  const { buildProjectJson } = require('../src/utils/buildProjectJson');
+  zip.file('project.json', buildProjectJson({ projectName, grids, descriptions }));
+      // Collect images and captions
+      for (const images of Object.values(grids)) {
+        for (const img of images) {
+          if (!img || !img.path) continue;
+          try {
+            let src = img.path;
+            if (src.startsWith('file://')) src = url.fileURLToPath(src);
+            const filename = path.basename(src).split('?')[0];
+            const data = await fs.promises.readFile(src);
+            zip.file(filename, data);
+            if (img.caption && img.caption.trim()) {
+              zip.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption.trim());
+            }
+          } catch (e) {
+            console.warn('Backup: skip image', img?.path, e);
+          }
+        }
+      }
+      const now = new Date();
+      const pad = (n: number) => n.toString().padStart(2, '0');
+      const stamp = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+      const zipName = `${projectName || 'project'}_${stamp}.zip`;
+      const zipPath = path.join(backupsDir, zipName);
+      const content = await zip.generateAsync({ type: 'nodebuffer' });
+      await fs.promises.writeFile(zipPath, content);
+      return { success: true, path: zipPath };
+    } catch (error) {
+      console.error('Error creating backup zip:', error);
+      return { success: false, error: String(error) };
+    }
   });
 };
 
@@ -414,6 +465,26 @@ app.on('window-all-closed', () => {
   ipcMain.removeHandler('select-directory');
   if (process.platform !== 'darwin') {
     app.quit();
+  }
+});
+// IPC handler to flip image (horizontal or vertical) and overwrite file
+ipcMain.handle('flip-image', async (event, fileUrl: string, direction: 'horizontal' | 'vertical') => {
+  try {
+    const { fileURLToPath } = require('url');
+    let filePath = fileUrl;
+    if (fileUrl.startsWith('file://')) {
+      filePath = fileURLToPath(fileUrl.split('?')[0]);
+    }
+    const sharp = require('sharp');
+    let image = sharp(filePath);
+    image = direction === 'vertical' ? image.flip() : image.flop();
+  // Writing to same path with toFile can throw 'Cannot use same file for input and output'. Use buffer then overwrite.
+  const buffer = await image.toBuffer();
+  await fs.promises.writeFile(filePath, buffer);
+  return { success: true, path: filePath };
+  } catch (error) {
+    console.error('Failed to flip image:', error);
+    return { success: false, error: String(error) };
   }
 });
 // Handler to open a folder in the system file explorer

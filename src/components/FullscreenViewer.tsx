@@ -1,10 +1,22 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { FullscreenViewerProps } from '../interfaces/types';
 
 const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onNext, onPrev, onDeleteImage }) => {
+  const [cacheBust, setCacheBust] = useState<number>(Date.now());
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
+      if (e.ctrlKey && image && (e.key === 'ArrowRight' || e.key === 'ArrowLeft')) {
+        e.preventDefault();
+        const direction = 'horizontal'; // Only horizontal flip for now (mirror)
+        const target = image.split('?')[0];
+        const result = await (window as any).electronAPI.flipImage(target, direction);
+        if (result.success) {
+          setCacheBust(Date.now());
+          console.log('Image flipped');
+        } else {
+          console.error('Flip failed', result.error);
+        }
+      } else if (e.key === 'ArrowRight') {
         onNext();
       } else if (e.key === 'ArrowLeft') {
         onPrev();
@@ -54,7 +66,8 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
 
   console.log("Fullscreen image path:", image); // Debug log
 
-  const normalizedImage = image.startsWith("file://") ? image : `file://${image}`;
+  const base = image.split('?')[0];
+  const normalizedImage = (base.startsWith('file://') ? base : `file://${base}`) + `?t=${cacheBust}`;
 
   return (
     <div

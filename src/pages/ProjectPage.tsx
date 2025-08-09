@@ -16,6 +16,7 @@ import { exportImagesTabToPDF } from '../utils/exportPdf';
 import { convertGridsForExport } from '../utils/convertGridsForExport';
 import { exportProjectToZip } from '../utils/exportZip';
 import FolderCopyIcon from '@mui/icons-material/FolderCopy';
+import BackupIcon from '@mui/icons-material/Backup';
 
 const initialGrids: Record<string, (ImageSlot | null)[]> = {
   'Close Up Head Rotations': Array(15).fill(null),
@@ -87,13 +88,16 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
 
       const absolutePathGrids: Record<string, (ImageSlot | null)[]> = { ...initialGrids };
       for (const section in result.data.grids) {
-        absolutePathGrids[section] = result.data.grids[section].map((image: ImageSlot | null) => {
+        const mapped = result.data.grids[section].map((image: ImageSlot | null) => {
           if (!image) return null;
-          
-          // For new ImageSlot objects, just ensure the path is correct
           const path = image.path.startsWith('file://') ? image.path : `file://${image.path.replace(/\\/g, '/')}`;
           return { ...image, path };
         });
+        const targetSize = section === 'Additional Images' ? 40 : 15;
+        if (mapped.length < targetSize) {
+          mapped.push(...Array(targetSize - mapped.length).fill(null));
+        }
+        absolutePathGrids[section] = mapped;
       }
       setGrids(absolutePathGrids);
   setPromptTemplate(result.data.promptTemplate || defaultPromptTemplate);
@@ -301,6 +305,19 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
       console.error('Export to ai-toolkit error:', err);
     }
   };
+  const handleExportBackup = async () => {
+    const exportGrids = convertGridsForExport(grids);
+    try {
+      const res = await window.electronAPI.exportBackupZip(projectName, exportGrids, descriptions);
+      if (res.success) {
+        console.log('Backup zip created at', res.path);
+      } else {
+        console.error('Backup export failed:', res.error);
+      }
+    } catch (e) {
+      console.error('Backup export exception:', e);
+    }
+  };
 
   const handleDeleteImage = (imagePath: string) => {
     const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
@@ -353,6 +370,23 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
         />
       </div>
       <div className="p-8">
+        {/* Project stats */}
+        {activeTab === 'images' && (
+          <div className="mb-4 text-sm text-gray-300">
+            {(() => {
+              let total = 0; let withCaption = 0;
+              for (const arr of Object.values(grids)) {
+                for (const slot of arr) {
+                  if (slot && slot.path) {
+                    total++;
+                    if (slot.caption && slot.caption.trim().length > 0) withCaption++;
+                  }
+                }
+              }
+              return `Images: ${withCaption}/${total} captioned`;
+            })()}
+          </div>
+        )}
         {activeTab === 'images' ? (
           <>
             <div className="mb-4">
@@ -409,22 +443,33 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
                 />
               </div>
             </div>
-            {Object.entries(grids).map(([title, images]) => (
-              <div key={title} data-section-title={title}>
-                <GridSection
-                  title={title}
-                  cols={gridConfigs[title].cols}
-                  loraTrigger={descriptions.loraTrigger}
-                  subjectAddition={descriptions.subjectAddition}
-                  promptTemplate={promptTemplate}
-                  images={images}
-                  onDropImage={(slotIndex: number, filePath: string) => handleDropImage(title, slotIndex, filePath)}
-                  onClickImage={handleClickImage}
-                  onCaptionChange={(index, caption) => handleCaptionChange(title, index, caption)}
-                  showCaptions={showCaptions}
-                />
-              </div>
-            ))}
+            {Object.entries(grids).map(([sectionTitle, images]) => {
+              // Compute per-section stats (only count filled slots)
+              let total = 0; let withCaption = 0;
+              for (const slot of images) {
+                if (slot && slot.path) {
+                  total++;
+                  if (slot.caption && slot.caption.trim().length > 0) withCaption++;
+                }
+              }
+              const displayTitle = `${sectionTitle}: Images: ${withCaption}/${total} captioned`;
+              return (
+                <div key={sectionTitle} data-section-title={sectionTitle}>
+                  <GridSection
+                    title={displayTitle}
+                    cols={gridConfigs[sectionTitle].cols}
+                    loraTrigger={descriptions.loraTrigger}
+                    subjectAddition={descriptions.subjectAddition}
+                    promptTemplate={promptTemplate}
+                    images={images}
+                    onDropImage={(slotIndex: number, filePath: string) => handleDropImage(sectionTitle, slotIndex, filePath)}
+                    onClickImage={handleClickImage}
+                    onCaptionChange={(index, caption) => handleCaptionChange(sectionTitle, index, caption)}
+                    showCaptions={showCaptions}
+                  />
+                </div>
+              );
+            })}
             <FullscreenViewer 
               image={fullscreenImage || ''} 
               onClose={handleCloseFullscreen}
@@ -486,6 +531,16 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName: initialProjectNa
               sx={{ mt: 2, fontWeight: 600 }}
             >
               Export to ai-toolkit
+            </Button>
+            <Button
+              onClick={handleExportBackup}
+              variant="contained"
+              color="secondary"
+              startIcon={<BackupIcon />}
+              fullWidth
+              sx={{ mt: 2, fontWeight: 600 }}
+            >
+              Export to Backup
             </Button>
           </Paper>
         )}

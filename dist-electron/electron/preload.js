@@ -26,6 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     copyImageToClipboard: (filePath) => ipcRenderer.invoke('copy-image-to-clipboard', filePath),
     openImageInExplorer: (filePath) => ipcRenderer.invoke('open-image-in-explorer', filePath),
     deleteImage: (filePath) => ipcRenderer.invoke('delete-image', filePath),
+    flipImage: (filePath, direction) => ipcRenderer.invoke('flip-image', filePath, direction),
     // Settings APIs
     getSettings: () => ipcRenderer.invoke('get-settings'),
     setSettings: (settings) => ipcRenderer.invoke('set-settings', settings),
@@ -37,6 +38,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     exportToAiToolkit: (projectName, grids) => {
         console.log('Preload: exportToAiToolkit args:', { projectName, grids });
         return ipcRenderer.invoke('export-to-ai-toolkit', projectName, grids);
+    },
+    exportBackupZip: (projectName, grids, descriptions) => {
+        console.log('Preload: exportBackupZip args:', { projectName, grids });
+        return ipcRenderer.invoke('export-backup-zip', projectName, grids, descriptions);
     },
     openFolderInExplorer: (folderPath) => ipcRenderer.invoke('open-folder-in-explorer', folderPath),
     getOpenAIKey: () => ipcRenderer.invoke('get-openai-key'),

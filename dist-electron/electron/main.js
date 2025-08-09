@@ -320,8 +320,15 @@ const createWindow = () => {
         // Load updated settings
         settings = (0, settings_1.getSettings)();
         const toolkitRoot = settings.aiToolkitDatasetsPath;
-        const targetDir = path_1.default.join(toolkitRoot, projectName);
-        // Create target directory
+        // Base directory for project exports
+        const projectRootDir = path_1.default.join(toolkitRoot, projectName);
+        await fs_1.default.promises.mkdir(projectRootDir, { recursive: true });
+        // Timestamped subdirectory (same pattern as zip exports)
+        const now = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+        const stampedDirName = `${projectName}_${dateStr}`;
+        const targetDir = path_1.default.join(projectRootDir, stampedDirName);
         await fs_1.default.promises.mkdir(targetDir, { recursive: true });
         const doResize = settings.resizeExportImages !== false; // default true
         const maxWidth = 1024;
@@ -389,6 +396,52 @@ const createWindow = () => {
         }
         return { success: true, folderPath: targetDir };
     });
+    // IPC handler to export backup zip into <loraDataRoot>/Backups/<ProjectName>/ProjectName_YYYY-MM-DD_HH-MM-SS.zip
+    electron_1.ipcMain.handle('export-backup-zip', async (event, projectName, grids, descriptions) => {
+        try {
+            settings = (0, settings_1.getSettings)();
+            const loraRoot = settings.loraDataRoot;
+            const backupsDir = path_1.default.join(loraRoot, 'Backups', projectName);
+            await fs_1.default.promises.mkdir(backupsDir, { recursive: true });
+            // Build zip in memory using JSZip
+            const JSZip = require('jszip');
+            const zip = new JSZip();
+            zip.file('project.json', JSON.stringify({ projectName, grids, descriptions }, null, 2));
+            // Collect images and captions
+            for (const images of Object.values(grids)) {
+                for (const img of images) {
+                    if (!img || !img.path)
+                        continue;
+                    try {
+                        let src = img.path;
+                        if (src.startsWith('file://'))
+                            src = url_1.default.fileURLToPath(src);
+                        const filename = path_1.default.basename(src).split('?')[0];
+                        const data = await fs_1.default.promises.readFile(src);
+                        zip.file(filename, data);
+                        if (img.caption && img.caption.trim()) {
+                            zip.file(filename.replace(/\.[^.]+$/, '.txt'), img.caption.trim());
+                        }
+                    }
+                    catch (e) {
+                        console.warn('Backup: skip image', img?.path, e);
+                    }
+                }
+            }
+            const now = new Date();
+            const pad = (n) => n.toString().padStart(2, '0');
+            const stamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+            const zipName = `${projectName || 'project'}_${stamp}.zip`;
+            const zipPath = path_1.default.join(backupsDir, zipName);
+            const content = await zip.generateAsync({ type: 'nodebuffer' });
+            await fs_1.default.promises.writeFile(zipPath, content);
+            return { success: true, path: zipPath };
+        }
+        catch (error) {
+            console.error('Error creating backup zip:', error);
+            return { success: false, error: String(error) };
+        }
+    });
 };
 electron_1.app.on('ready', createWindow);
 electron_1.app.on('window-all-closed', () => {
@@ -405,6 +458,27 @@ electron_1.app.on('window-all-closed', () => {
     electron_1.ipcMain.removeHandler('select-directory');
     if (process.platform !== 'darwin') {
         electron_1.app.quit();
+    }
+});
+// IPC handler to flip image (horizontal or vertical) and overwrite file
+electron_1.ipcMain.handle('flip-image', async (event, fileUrl, direction) => {
+    try {
+        const { fileURLToPath } = require('url');
+        let filePath = fileUrl;
+        if (fileUrl.startsWith('file://')) {
+            filePath = fileURLToPath(fileUrl.split('?')[0]);
+        }
+        const sharp = require('sharp');
+        let image = sharp(filePath);
+        image = direction === 'vertical' ? image.flip() : image.flop();
+        // Writing to same path with toFile can throw 'Cannot use same file for input and output'. Use buffer then overwrite.
+        const buffer = await image.toBuffer();
+        await fs_1.default.promises.writeFile(filePath, buffer);
+        return { success: true, path: filePath };
+    }
+    catch (error) {
+        console.error('Failed to flip image:', error);
+        return { success: false, error: String(error) };
     }
 });
 // Handler to open a folder in the system file explorer

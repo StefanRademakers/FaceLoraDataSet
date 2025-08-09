@@ -12,6 +12,7 @@ declare global {
       openImageInExplorer: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       deleteImage: (filePath: string) => Promise<{ success: boolean; error?: string }>;
       openFolderInExplorer: (folderPath: string) => Promise<{ success: boolean; error?: string }>;
+  flipImage: (filePath: string, direction: 'horizontal' | 'vertical') => Promise<{ success: boolean; path?: string; error?: string }>;
          getSettings: () => Promise<{ loraDataRoot: string; aiToolkitDatasetsPath: string; resizeExportImages?: boolean }>;
          setSettings: (settings: { loraDataRoot: string; aiToolkitDatasetsPath: string; resizeExportImages?: boolean }) => void;
       selectDirectory: () => Promise<string | null>;
@@ -19,6 +20,7 @@ declare global {
       setOpenAIKey: (key: string) => Promise<boolean>;
   autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string, promptTemplate?: string) => Promise<string>;
   exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>) => Promise<{ success: boolean; folderPath: string }>;
+  exportBackupZip: (projectName: string, grids: Record<string, { path: string; caption: string }[]>, descriptions: any) => Promise<{ success: boolean; path?: string; error?: string }>;
     };
   }
 }

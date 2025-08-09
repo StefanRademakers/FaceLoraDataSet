@@ -1,4 +1,6 @@
+
 import JSZip from 'jszip';
+import { buildProjectJson } from './buildProjectJson';
 
 export async function exportProjectToZip({
   projectName,
@@ -11,9 +13,8 @@ export async function exportProjectToZip({
 }) {
   const zip = new JSZip();
 
-  // Add project JSON
-  const projectJson = JSON.stringify({ projectName, grids, descriptions }, null, 2);
-  zip.file('project.json', projectJson);
+  // Add project JSON using shared utility
+  zip.file('project.json', buildProjectJson({ projectName, grids, descriptions }));
 
   // Add images and captions (flattened, no subdirectories)
   for (const images of Object.values(grids)) {
