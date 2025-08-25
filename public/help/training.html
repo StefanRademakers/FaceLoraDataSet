@@ -1,0 +1,120 @@
+
+    <h1>Training a LoRA</h1>
+    <p>This section explains how to use the 'Train LoRA' tab.</p>
+    <h2>Key Concepts</h2>
+    <ul>
+        <li><strong>Epochs:</strong> How many times the entire dataset is shown to the model.</li>
+        <li><strong>Steps:</strong> Total number of training iterations.</li>
+        <li><strong>Learning Rate (LR):</strong> How quickly the model adapts.</li>
+    </ul>
+    <p>Use the calculator to balance these parameters for optimal results.</p>
+
+    <h1 class="c10" id="h.z1ielnrwn80a"><span class="c3 c15">&#128203; Belangrijke variatie-dimensies voor een goede
+            LoRA-set</span></h1>
+    <h3 class="c6" id="h.jal1ouqgxwjy"><span class="c5 c3">1. Shot / framing</span></h3>
+    <ul class="c11 lst-kix_v9vlqvgdz1d9-0 start">
+        <li class="c0 li-bullet-0"><span class="c3">Extreme close-up</span><span class="c1">&nbsp;(ogen, mond, detail
+                van haar of handen)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c3">Close-up</span><span class="c1">&nbsp;(gezicht, hoofd en
+                nek)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c3">Medium close</span><span class="c1">&nbsp;(borsthoogte, head &amp;
+                shoulders)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c3">Medium shot</span><span class="c1">&nbsp;(bovenlichaam tot
+                heupen)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c3">Wide shot</span><span class="c1">&nbsp;(volledig lichaam)<br></span>
+        </li>
+        <li class="c0 li-bullet-0"><span class="c3">Extreme wide</span><span class="c1">&nbsp;(klein in de omgeving /
+                scenery dominant)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c9 c3">Over-the-shoulder / 3/4 view<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c9 c3">Profile (side view)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c3 c9">Back view<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.noqmtnye3q2m"><span class="c3 c5">2. Hoeken (head angles &amp; poses)</span></h3>
+    <ul class="c11 lst-kix_czkt6idffixn-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Frontaal<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">&frac34; view links/rechts<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Profiel links/rechts<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Rug (met hoofd gedraaid)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Bovenaanzicht (&ldquo;top-down&rdquo;)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Onderaan (&ldquo;low angle shot&rdquo;)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Kijkrichting (recht in camera, naar boven, naar beneden,
+                opzij)<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.ysxvzliaawwi"><span class="c5 c3">3. Belichting</span></h3>
+    <ul class="c11 lst-kix_xwsjaxggjnzn-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Front light (vlak, helder)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Side light (dramatisch, Rembrandt)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Backlight (silhouet, rim light)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Top light (zon/spotlight van boven)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Under light (theatraal)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Soft diffuse (bewolkt, softbox)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Hard midday sun (strak contrast)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Golden hour (warm, laag zonlicht)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Night artificial (lampen, neon, straatlicht)<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.tq35u6pslwkn"><span class="c5 c3">4. Expressie / emotie</span></h3>
+    <ul class="c11 lst-kix_djxklvrpteyp-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Neutraal<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Lachen (licht en breed)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Serieus / geconcentreerd<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Vrolijk / open<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Verrast / verbaasd<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Ogen dicht / kijkend weg<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Licht boos / streng<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Relaxed / dromerig<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.s1nmohohwvnh"><span class="c5 c3">5. Omgeving / context</span></h3>
+    <ul class="c11 lst-kix_54szcjxjq1ms-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Outdoor (stad, natuur, strand, bos, bergen)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Indoor (woonkamer, keuken, studio, kantoor)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Neutraal vlak (studio achtergrond, zwart/wit/gekleurde
+                seamless)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Crowd / straat / architectuur op achtergrond<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Nature / water / lucht<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.rea4y0cblyo"><span class="c5 c3">6. Kleding &amp; accessoires (indien relevant)</span></h3>
+    <ul class="c11 lst-kix_wkfzgujxl939-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Verschillende outfits (casual, formeel, traditioneel,
+                sportief)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Accessoires (bril, ketting, hoed, sjaal, oorbellen)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Haar los vs. vast<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Baard variaties (indien mogelijk)<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.7b4qtzhx5lfb"><span class="c5 c3">7. Compositie &amp; camera eigenschappen</span></h3>
+    <ul class="c11 lst-kix_dbs9yt7wyr5z-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Symmetrisch vs. asymmetrisch<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Depth of field (scherp vs. blurry achtergrond)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Lens variatie (24mm wide, 50mm standaard, 85mm portret)<br></span>
+        </li>
+        <li class="c0 li-bullet-0"><span class="c1">Crop tight vs. ruimte boven/breed<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Bewegingsonscherpte (heel subtiel!)<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <h3 class="c6" id="h.1izd7wq93hm6"><span class="c5 c3">8. Actie / interactie</span></h3>
+    <ul class="c11 lst-kix_w00g5r9h6b11-0 start">
+        <li class="c0 li-bullet-0"><span class="c1">Zittend / staand / lopend<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Handen zichtbaar (in haar, armen gekruist, handgebaar)<br></span>
+        </li>
+        <li class="c0 li-bullet-0"><span class="c1">Interactie met object (boek, stoel, deur, raam)<br></span></li>
+        <li class="c0 li-bullet-0"><span class="c1">Kijken naar iets buiten beeld<br></span></li>
+    </ul>
+    <hr>
+    <p class="c4"><span class="c1"></span></p>
+    <p class="c12"><span>&#128073; Als je uit elke categorie </span><span class="c3">2&ndash;4
+            varianten</span><span>&nbsp;pakt, heb je al snel een dataset die veel rijker is dan &ldquo;gewoon 200
+            plaatjes&rdquo;. Je LoRA leert dan identiteit </span><span class="c3">plus</span><span
+            class="c1">&nbsp;context &amp; flexibiliteit.</span></p>
+    <p class="c4"><span class="c1"></span></p>

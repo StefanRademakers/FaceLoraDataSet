@@ -34,12 +34,21 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
           <div key={index} className="flex flex-col">
             <div
               data-tile-index={index}
-              className="relative w-64 h-64 bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer"
+              className="relative w-64 h-64 bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"
               onDragOver={handleDragOver}
               onClick={() => imageSlot && onClickImage(imageSlot.path)}
             >
               {imageSlot ? (
-                <img src={imageSlot.path} alt="" className="object-cover w-full h-full rounded-lg" />
+                <img
+                  src={imageSlot.path}
+                  alt=""
+                  className="max-w-full max-h-full object-contain select-none"
+                  style={{
+                    // Ensure image centers and respects aspect ratio with transparent padding around
+                    objectPosition: 'center center',
+                    pointerEvents: 'none'
+                  }}
+                />
               ) : (
                 <span className="text-4xl text-gray-500">+</span>
               )}

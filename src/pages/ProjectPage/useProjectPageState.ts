@@ -3,7 +3,7 @@ import { AppState, DEFAULT_APP_STATE } from '../../interfaces/AppState';
 import { ImageSlot } from '../../interfaces/types';
 import { GRID_SECTION_CONFIGS, initialGrids } from '../../config/gridConfig';
 
-export type ProjectTabs = 'images' | 'descriptions' | 'export' | 'train';
+export type ProjectTabs = 'images' | 'descriptions' | 'export' | 'train' | 'help';
 
 export function useProjectPageState(initialProjectName: string) {
   const [appState, setAppState] = useState<AppState>({

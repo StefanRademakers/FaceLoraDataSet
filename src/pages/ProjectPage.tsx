@@ -7,6 +7,7 @@ import ImagesTab from './ProjectPage/ImagesTab';
 import DescriptionsTab from './ProjectPage/DescriptionsTab';
 import ExportTab from './ProjectPage/ExportTab';
 import TrainLoraTab from './ProjectPage/TrainLoraTab';
+import HelpPage from './HelpPage';
 
 
 interface ProjectPageProps {
@@ -159,7 +160,10 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             saveProject={state.saveProject}
           />
         )}
-        {state.activeTab === 'export' && (
+        {state.activeTab === 'train' && (
+          <TrainLoraTab appState={state.appState} />
+        )}
+  {state.activeTab === 'export' && (
           <ExportTab
             appState={state.appState}
             handleExportToPDF={handleExportToPDF}
@@ -171,8 +175,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             onSnackbarClose={handleSnackbarClose}
           />
         )}
-        {state.activeTab === 'train' && (
-          <TrainLoraTab appState={state.appState} />
+        {state.activeTab === 'help' && (
+          <HelpPage />
         )}
       </div>
     </>
