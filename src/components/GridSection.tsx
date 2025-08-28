@@ -4,6 +4,8 @@ import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
 
 interface GridSectionProps {
   title: string;
@@ -26,9 +28,53 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
 
   const gridCols = `grid-cols-${cols}`;
 
+  const [bulkRunning, setBulkRunning] = React.useState(false);
+
+  const missingCount = React.useMemo(() => {
+    return images.reduce((acc, slot) => acc + (slot && (!slot.caption || slot.caption.trim().length === 0) ? 1 : 0), 0);
+  }, [images]);
+
+  const handleBulkCaption = async () => {
+    if (bulkRunning) return;
+    setBulkRunning(true);
+    try {
+      for (let i = 0; i < images.length; i++) {
+        const slot = images[i];
+        if (!slot) continue;
+        if (slot.caption && slot.caption.trim().length > 0) continue;
+        try {
+          const caption: string = await window.electronAPI.autoGenerateCaption(slot.path, loraTrigger, subjectAddition, promptTemplate);
+          onCaptionChange(i, caption);
+        } catch (err) {
+          console.error('Bulk caption error for index', i, err);
+        }
+      }
+    } finally {
+      setBulkRunning(false);
+    }
+  };
+
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold mb-4">{title}</h2>
+      <div className="flex items-center justify-between mb-4 gap-4 flex-wrap">
+        <h2 className="text-2xl font-bold">{title}</h2>
+        {showCaptions && (
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleBulkCaption}
+            disabled={bulkRunning || missingCount === 0}
+            startIcon={!bulkRunning ? <AutoAwesomeIcon /> : undefined}
+            sx={{ minWidth: 220 }}
+          >
+            {bulkRunning ? (
+              <><CircularProgress size={18} sx={{ mr: 1 }} /> Captioning...</>
+            ) : (
+              missingCount === 0 ? 'All captioned' : `Auto caption ${missingCount} missing`
+            )}
+          </Button>
+        )}
+      </div>
       <div className={`grid ${gridCols} gap-4`}>
         {images.map((imageSlot, index) => (
           <div key={index} className="flex flex-col">
