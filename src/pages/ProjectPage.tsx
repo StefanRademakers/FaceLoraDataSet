@@ -45,6 +45,11 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
     setSnackbarMessage('Backup zip created');
     setSnackbarOpen(true);
   };
+  const handleExportStaticHtml = async () => {
+    await state.handleExportStaticHtml();
+    setSnackbarMessage('Static HTML export created');
+    setSnackbarOpen(true);
+  };
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
   return (
@@ -170,6 +175,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             handleExportToZip={handleExportToZip}
             handleExportToAiToolkit={handleExportToAiToolkit}
             handleExportBackup={handleExportBackup}
+            handleExportStaticHtml={handleExportStaticHtml}
             snackbarOpen={snackbarOpen}
             snackbarMessage={snackbarMessage}
             onSnackbarClose={handleSnackbarClose}

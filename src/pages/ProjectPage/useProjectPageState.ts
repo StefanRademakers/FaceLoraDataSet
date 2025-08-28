@@ -219,6 +219,11 @@ export function useProjectPageState(initialProjectName: string) {
     }
   };
 
+  const handleExportStaticHtml = async () => {
+    const { exportStaticHtml } = await import('../../utils/exportStaticHtml');
+    await exportStaticHtml(appState);
+  };
+
   const handleExportBackup = async () => {
     try {
       const res = await window.electronAPI.exportBackupZip(appState);
@@ -297,5 +302,6 @@ export function useProjectPageState(initialProjectName: string) {
     handleExportToZip,
     handleExportToAiToolkit,
     handleExportBackup,
+  handleExportStaticHtml,
   };
 }

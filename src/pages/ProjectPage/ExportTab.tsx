@@ -18,6 +18,7 @@ interface ExportTabProps {
   handleExportToZip: () => Promise<void>;
   handleExportToAiToolkit: () => Promise<void>;
   handleExportBackup: () => Promise<void>;
+  handleExportStaticHtml: () => Promise<void>;
   snackbarOpen: boolean;
   snackbarMessage: string;
   onSnackbarClose: () => void;
@@ -30,6 +31,7 @@ const ExportTab: React.FC<ExportTabProps> = ({
   handleExportToZip,
   handleExportToAiToolkit,
   handleExportBackup,
+  handleExportStaticHtml,
   snackbarOpen,
   snackbarMessage,
   onSnackbarClose,
@@ -79,6 +81,15 @@ const ExportTab: React.FC<ExportTabProps> = ({
           sx={{ mt: 2, fontWeight: 600 }}
         >
           Export to Backup
+        </Button>
+        <Button
+          onClick={handleExportStaticHtml}
+          variant="outlined"
+          color="primary"
+          fullWidth
+          sx={{ mt: 3, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
+        >
+          Export Static HTML File
         </Button>
       </Paper>
       <Snackbar
