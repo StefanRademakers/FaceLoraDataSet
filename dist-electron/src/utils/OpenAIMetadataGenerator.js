@@ -17,8 +17,58 @@ class OpenAIMetadataGenerator {
         this.apiKey = apiKey;
     }
     buildPrompt() {
-        // Provided template with explicit schema
-        return 'You are an annotation assistant. Analyze the given image and return a JSON object using ONLY the allowed values below. Do not invent or combine categories. Always choose one value for each field. Schema: { "shotType": "extreme-close" | "close" | "medium" | "wide", "angle": "frontal" | "three-quarter" | "profile" | "back" | "low-angle" | "high-angle", "lighting": "daylight" | "indoor" | "night" | "sunset" | "studio", "environment": "neutral" | "indoor" | "outdoor" | "nature" | "city" | "sky", "mood": "neutral" | "smiling" | "serious" | "surprised" | "dreamy" | "stern" | "relaxed" | "contemplative", "action": "stand" | "sit" | "walk" | "gesture" | "hold-object" | "interact" | "none" };';
+        // Enhanced prompt with explicit definitions (especially shotType) and strict JSON response requirement
+        return `You are an annotation assistant. Analyze the supplied image and return ONLY a raw JSON object (no markdown, no code fences, no explanation) that conforms EXACTLY to this schema:
+{
+  "shotType": "extreme-close" | "close" | "medium" | "wide",
+  "angle": "frontal" | "three-quarter" | "profile" | "back" | "low-angle" | "high-angle",
+  "lighting": "daylight" | "indoor" | "night" | "sunset" | "studio",
+  "environment": "neutral" | "indoor" | "outdoor" | "nature" | "city" | "sky",
+  "mood": "neutral" | "smiling" | "serious" | "surprised" | "dreamy" | "stern" | "relaxed" | "contemplative",
+  "action": "stand" | "sit" | "walk" | "gesture" | "hold-object" | "interact" | "none"
+}
+
+Rules:
+- Use ONLY the listed values. Do NOT invent, pluralize, merge, or add adjectives.
+- Always choose exactly one value for every field.
+- If uncertain, pick the closest valid category by applying the definitions below.
+
+ShotType guidelines (MOST important – follow these carefully):
+1. extreme-close: Only part of the face or a very tight crop on facial detail (eyes, nose, mouth, single eye) – excludes most of head/shoulders.
+2. close: Full head clearly visible (may include a bit of neck/shoulders) but NOT down to the waist.
+3. medium: Subject framed roughly chest OR waist up (includes torso) but DOES NOT show knees/ankles/feet.
+4. wide: Shows the full body OR at least head plus knees (or lower legs / ankles / feet). If knees or lower legs are visible, prefer "wide" over "medium".
+   Priority when ambiguous: extreme-close > close > medium > wide.
+
+Angle definitions:
+- frontal: Face/front fully toward camera.
+- three-quarter: Turned noticeably so one side is more visible but both eyes/cheeks present.
+- profile: Exact or near side view (one eye, side of face).
+- back: Back of head/body primarily visible.
+- low-angle: Camera clearly below eye line looking upward.
+- high-angle: Camera clearly above eye line looking downward.
+(If low/high perspective is obvious AND frontal/three-quarter/profile also applies, choose low-angle/high-angle instead of the others.)
+
+Lighting:
+- daylight: Natural outdoor daylight (sun, overcast) not sunset / night.
+- sunset: Warm golden/late sunlight or clear sunset hues.
+- night: Dark scene, moonlight, stars, artificial night illumination.
+- indoor: Non-studio artificial/interior ambient light.
+- studio: Controlled, even or dramatic artificial lighting setup (seamless/background lights, softboxes, etc.).
+
+Environment:
+- neutral: Plain / solid / featureless backdrop.
+- indoor: Interior space (room) with identifiable elements (furniture, walls) excluding neutral backdrops.
+- outdoor: Outside but generic (cannot strongly classify as nature or city or sky focus).
+- nature: Forest, desert, beach, lake, mountains, vegetation, natural landscape.
+- city: Urban / architectural / street / skyline elements dominate.
+- sky: Sky or aerial expanse dominates (horizon minimal subject context).
+
+Mood (visible expression / vibe): neutral, smiling, serious, surprised, dreamy (soft distant gaze), stern (firm/intense), relaxed (calm pleasant), contemplative (thoughtful/inward).
+
+Action (primary body activity): stand, sit, walk (in motion or mid-step), gesture (visible hand expressive motion), hold-object (actively holding a distinct object as focus), interact (engaging with another subject/animal/object), none (no notable action beyond posing).
+
+Output ONLY the JSON object; do not wrap it in any text or code fences.`;
     }
     // Resize proportionally so that width*height <= 500k pixels (0.5 MP)
     async resizeForTokens(originalPath) {
