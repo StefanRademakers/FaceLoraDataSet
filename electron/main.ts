@@ -3,6 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import url from 'url';
 import { OpenAICaptioner } from '../src/utils/OpenAICaptioner';
+import { OpenAIMetadataGenerator } from '../src/utils/OpenAIMetadataGenerator';
 import { getSettings, saveSettings, getOpenAIKey, setOpenAIKey } from './settings';
 import { AppState, DEFAULT_APP_STATE } from '../src/interfaces/AppState';
 import { toRelativeGrids, toAbsoluteGrids } from '../src/utils/pathTransforms';
@@ -289,6 +290,17 @@ ipcMain.handle('auto-generate-caption', async (event, imagePath: string, token: 
   // Generate caption
   const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition, false, promptTemplate);
   return caption;
+});
+// IPC handler for auto-generating structured metadata
+ipcMain.handle('auto-generate-metadata', async (event, imagePath: string) => {
+  const key = await getOpenAIKey();
+  if (!key) throw new Error('OpenAI API key not set');
+  const generator = new OpenAIMetadataGenerator(key);
+  let filePathArg = imagePath;
+  try {
+    if (filePathArg.startsWith('file://')) filePathArg = url.fileURLToPath(filePathArg);
+  } catch {}
+  return await generator.generateMetadata(filePathArg, false);
 });
   // IPC handler for exporting to AI Toolkit datasets folder
   ipcMain.handle('export-to-ai-toolkit', async (event, projectName: string, grids: Record<string, { path: string; caption: string }[]>, appState?: AppState) => {

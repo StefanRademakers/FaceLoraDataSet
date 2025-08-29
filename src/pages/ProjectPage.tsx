@@ -7,6 +7,7 @@ import ImagesTab from './ProjectPage/ImagesTab';
 import DescriptionsTab from './ProjectPage/DescriptionsTab';
 import ExportTab from './ProjectPage/ExportTab';
 import TrainLoraTab from './ProjectPage/TrainLoraTab';
+import DatasetCheckTab from './ProjectPage/DatasetCheckTab';
 import HelpPage from './HelpPage';
 
 
@@ -105,6 +106,22 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
                   '.MuiSwitch-track': { backgroundColor: '#424242' }
                 }}
               />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={state.showMetadata}
+                    onChange={() => state.setShowMetadata(!state.showMetadata)}
+                    color="primary"
+                  />
+                }
+                label="Show Metadata"
+                sx={{
+                  color: 'white',
+                  '.MuiSwitch-thumb': { backgroundColor: '#90caf9' },
+                  '.MuiSwitch-track': { backgroundColor: '#424242' },
+                  ml: 4
+                }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
@@ -152,6 +169,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             setAppState={state.setAppState}
             showCaptions={state.showCaptions}
             setShowCaptions={state.setShowCaptions}
+            showMetadata={state.showMetadata}
+            setShowMetadata={state.setShowMetadata}
             fullscreenImage={state.fullscreenImage}
             setFullscreenImage={state.setFullscreenImage}
             allImages={state.allImages}
@@ -177,6 +196,9 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
         )}
         {state.activeTab === 'train' && (
           <TrainLoraTab appState={state.appState} />
+        )}
+        {state.activeTab === 'dataset-check' && (
+          <DatasetCheckTab appState={state.appState} />
         )}
   {state.activeTab === 'export' && (
           <ExportTab

@@ -15,10 +15,8 @@ const HelpPage: React.FC = () => {
   const [error, setError] = React.useState<string | null>(null);
 
   const helpFiles = [
-    { key: 'welcome.html', title: 'Welcome' },
-    { key: 'training.html', title: 'Training Guide' },
-    { key: 'datasetsize.html', title: 'Dataset Size Guide' },
-    { key: 'loratraining.html', title: 'LoRA Training Tips' },
+    { key: 'setverdeling.html', title: 'Set verdeling' },
+    { key: 'inspiratie.html', title: 'Training Guide Inspiratie' },
   ];
 
   React.useEffect(() => {

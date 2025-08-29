@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { buildZipFromAppState } from '../src/utils/exportZip';
 import type { AppState } from '../src/interfaces/AppState';
 
@@ -7,11 +8,11 @@ function makeState(): AppState {
     projectName: 'TestProj',
     grids: {
       A: [
-        { path: 'http://example.com/a.jpg', caption: 'hello' },
+        { path: 'http://example.com/a.jpg', caption: 'hello', metadata: { shotType: '', angle: '', lighting: '', environment: '', mood: '', action: '', likeness: { score: 1.0, ref: 'none' } } },
         null,
       ],
       B: [
-        { path: 'http://example.com/b.png?cache=1', caption: '' },
+        { path: 'http://example.com/b.png?cache=1', caption: '', metadata: { shotType: '', angle: '', lighting: '', environment: '', mood: '', action: '', likeness: { score: 1.0, ref: 'none' } } },
       ],
     },
     descriptions: {

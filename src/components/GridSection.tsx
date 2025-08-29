@@ -1,5 +1,5 @@
 import React from 'react';
-import { ImageSlot } from '../interfaces/types';
+import { ImageSlot, DEFAULT_IMAGE_METADATA, ImageMetadata } from '../interfaces/types';
 import TextField from '@mui/material/TextField';
 import InputAdornment from '@mui/material/InputAdornment';
 import IconButton from '@mui/material/IconButton';
@@ -19,9 +19,11 @@ interface GridSectionProps {
   onClickImage: (imagePath: string) => void;
   onCaptionChange: (index: number, caption: string) => void;
   showCaptions: boolean;
+  showMetadata: boolean;
+  onMetadataChange: (index: number, metadata: Partial<ImageMetadata>) => void;
 }
 
-const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, subjectAddition, promptTemplate, images, onClickImage, onCaptionChange, showCaptions }) => {
+const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, subjectAddition, promptTemplate, images, onClickImage, onCaptionChange, showCaptions, showMetadata, onMetadataChange }) => {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
@@ -32,6 +34,15 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
 
   const missingCount = React.useMemo(() => {
     return images.reduce((acc, slot) => acc + (slot && (!slot.caption || slot.caption.trim().length === 0) ? 1 : 0), 0);
+  }, [images]);
+
+  const missingMetaCount = React.useMemo(() => {
+    return images.reduce((acc, slot) => {
+      if (!slot) return acc;
+      const m = slot.metadata || DEFAULT_IMAGE_METADATA;
+      const empty = !m.shotType || !m.angle || !m.lighting || !m.environment || !m.mood || !m.action;
+      return acc + (empty ? 1 : 0);
+    }, 0);
   }, [images]);
 
   const handleBulkCaption = async () => {
@@ -71,6 +82,42 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
               <><CircularProgress size={18} sx={{ mr: 1 }} /> Captioning...</>
             ) : (
               missingCount === 0 ? 'All captioned' : `Auto caption ${missingCount} missing`
+            )}
+          </Button>
+        )}
+        {showMetadata && (
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={async () => {
+              if (bulkRunning) return;
+              setBulkRunning(true);
+              try {
+                for (let i = 0; i < images.length; i++) {
+                  const slot = images[i];
+                  if (!slot) continue;
+                  const meta = slot.metadata || DEFAULT_IMAGE_METADATA;
+                  const incomplete = !meta.shotType || !meta.angle || !meta.lighting || !meta.environment || !meta.mood || !meta.action;
+                  if (!incomplete) continue;
+                  try {
+                    const generated: ImageMetadata = await (window as any).electronAPI.autoGenerateMetadata(slot.path);
+                    onMetadataChange(i, generated);
+                  } catch (e) {
+                    console.error('Bulk metadata error', e);
+                  }
+                }
+              } finally {
+                setBulkRunning(false);
+              }
+            }}
+            disabled={bulkRunning || missingMetaCount === 0}
+            startIcon={!bulkRunning ? <AutoAwesomeIcon /> : undefined}
+            sx={{ minWidth: 260 }}
+          >
+            {bulkRunning ? (
+              <><CircularProgress size={18} sx={{ mr: 1 }} /> Annotating...</>
+            ) : (
+              missingMetaCount === 0 ? 'All metadata filled' : `Auto metadata ${missingMetaCount} missing`
             )}
           </Button>
         )}
@@ -137,6 +184,44 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
                 }}
                 InputLabelProps={{ style: { color: '#90caf9' } }}
               />
+            )}
+            {showMetadata && imageSlot && (
+              <div className="mt-2 p-2 rounded bg-[#23272b] text-white text-xs space-y-2 border border-[#444]">
+                {/* Dropdowns */}
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { key: 'shotType', label: 'Shot', options: ['','extreme-close','close','medium','wide'] },
+                    { key: 'angle', label: 'Angle', options: ['','frontal','three-quarter','profile','back','low-angle','high-angle'] },
+                    { key: 'lighting', label: 'Lighting', options: ['','daylight','indoor','night','sunset','studio'] },
+                    { key: 'environment', label: 'Env', options: ['','neutral','indoor','outdoor','nature','city','sky'] },
+                    { key: 'mood', label: 'Mood', options: ['','neutral','smiling','serious','surprised','dreamy','stern','relaxed','contemplative'] },
+                    { key: 'action', label: 'Action', options: ['','stand','sit','walk','gesture','hold-object','interact','none'] },
+                  ].map(field => (
+                    <label key={field.key} className="flex flex-col text-[10px]">
+                      <span className="mb-0.5 opacity-70">{field.label}</span>
+                      <select
+                        value={(imageSlot.metadata || DEFAULT_IMAGE_METADATA)[field.key as keyof ImageMetadata] as string || ''}
+                        onChange={(e) => onMetadataChange(index, { [field.key]: e.target.value } as any)}
+                        className="bg-[#1d2023] border border-[#555] rounded px-1 py-1 text-white text-xs focus:outline-none focus:border-[#90caf9]"
+                      >
+                        {field.options.map(opt => <option key={opt} value={opt}>{opt || '-'}</option>)}
+                      </select>
+                    </label>
+                  ))}
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    className="text-[11px] px-2 py-1 bg-[#2d3135] hover:bg-[#3a4045] rounded border border-[#555] flex items-center gap-1"
+                    onClick={() => {
+                      (window as any).electronAPI.autoGenerateMetadata(imageSlot.path)
+                        .then((m: ImageMetadata) => onMetadataChange(index, m))
+                        .catch((e: any) => console.error('Auto metadata error', e));
+                    }}
+                  >
+                    <AutoAwesomeIcon fontSize="inherit" /> Auto
+                  </button>
+                </div>
+              </div>
             )}
           </div>
         ))}

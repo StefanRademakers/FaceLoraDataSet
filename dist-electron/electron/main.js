@@ -8,6 +8,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const url_1 = __importDefault(require("url"));
 const OpenAICaptioner_1 = require("../src/utils/OpenAICaptioner");
+const OpenAIMetadataGenerator_1 = require("../src/utils/OpenAIMetadataGenerator");
 const settings_1 = require("./settings");
 const AppState_1 = require("../src/interfaces/AppState");
 const pathTransforms_1 = require("../src/utils/pathTransforms");
@@ -284,6 +285,20 @@ const createWindow = () => {
         // Generate caption
         const caption = await captioner.generateLoraCaption(filePathArg, token, subjectAddition, false, promptTemplate);
         return caption;
+    });
+    // IPC handler for auto-generating structured metadata
+    electron_1.ipcMain.handle('auto-generate-metadata', async (event, imagePath) => {
+        const key = await (0, settings_1.getOpenAIKey)();
+        if (!key)
+            throw new Error('OpenAI API key not set');
+        const generator = new OpenAIMetadataGenerator_1.OpenAIMetadataGenerator(key);
+        let filePathArg = imagePath;
+        try {
+            if (filePathArg.startsWith('file://'))
+                filePathArg = url_1.default.fileURLToPath(filePathArg);
+        }
+        catch { }
+        return await generator.generateMetadata(filePathArg, false);
     });
     // IPC handler for exporting to AI Toolkit datasets folder
     electron_1.ipcMain.handle('export-to-ai-toolkit', async (event, projectName, grids, appState) => {

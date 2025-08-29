@@ -1,9 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import { AppState, DEFAULT_APP_STATE } from '../../interfaces/AppState';
-import { ImageSlot } from '../../interfaces/types';
+import { ImageSlot, DEFAULT_IMAGE_METADATA } from '../../interfaces/types';
 import { GRID_SECTION_CONFIGS, initialGrids } from '../../config/gridConfig';
 
-export type ProjectTabs = 'images' | 'descriptions' | 'export' | 'train' | 'help';
+export type ProjectTabs = 'images' | 'descriptions' | 'export' | 'train' | 'dataset-check' | 'help';
 
 export function useProjectPageState(initialProjectName: string) {
   const [appState, setAppState] = useState<AppState>({
@@ -16,6 +16,7 @@ export function useProjectPageState(initialProjectName: string) {
   const [currentImageIndex, setCurrentImageIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<ProjectTabs>('images');
   const [showCaptions, setShowCaptions] = useState(true);
+  const [showMetadata, setShowMetadata] = useState(false);
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
 
   const stateRef = useRef(appState);
@@ -33,7 +34,7 @@ export function useProjectPageState(initialProjectName: string) {
         const mapped = result.data.grids[section].map((image: ImageSlot | null) => {
           if (!image) return null;
           const path = image.path.startsWith('file://') ? image.path : `file://${image.path.replace(/\\/g, '/')}`;
-          return { ...image, path };
+          return { ...image, path, metadata: image.metadata || { ...DEFAULT_IMAGE_METADATA } };
         });
         const targetSize = section === 'Additional Images' ? 40 : 15;
         if (mapped.length < targetSize) {
@@ -77,7 +78,7 @@ export function useProjectPageState(initialProjectName: string) {
             const newGrids = { ...prev.grids };
             const newImages = [...(newGrids[section] || [])];
             const finalUrl = result.path ? `file://${result.path.replace(/\\/g, '/')}` + `?t=${new Date().getTime()}` : '';
-            newImages[index] = { path: finalUrl, caption: '' };
+            newImages[index] = { path: finalUrl, caption: '', metadata: { ...DEFAULT_IMAGE_METADATA } };
             newGrids[section] = newImages;
             const updated = { ...prev, grids: newGrids };
             window.electronAPI.saveProject(updated);
@@ -120,7 +121,7 @@ export function useProjectPageState(initialProjectName: string) {
     setAppState((prev) => {
       const newGrids = { ...prev.grids };
       const newImages = [...(newGrids[section] || [])];
-      newImages[slotIndex] = { path: filePath, caption: '' };
+  newImages[slotIndex] = { path: filePath, caption: '', metadata: { ...DEFAULT_IMAGE_METADATA } };
       newGrids[section] = newImages;
       return { ...prev, grids: newGrids };
     });
@@ -294,7 +295,9 @@ export function useProjectPageState(initialProjectName: string) {
     activeTab,
     setActiveTab,
     showCaptions,
-    setShowCaptions,
+  setShowCaptions,
+  showMetadata,
+  setShowMetadata,
     isProjectLoaded,
     setIsProjectLoaded,
     stateRef,

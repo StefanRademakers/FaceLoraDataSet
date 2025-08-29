@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
         console.log('Preload: autoGenerateCaption args:', { imagePath, token, subjectAddition, hasTemplate: !!promptTemplate });
         return ipcRenderer.invoke('auto-generate-caption', imagePath, token, subjectAddition, promptTemplate);
     },
+    autoGenerateMetadata: (imagePath) => {
+        return ipcRenderer.invoke('auto-generate-metadata', imagePath);
+    },
     exportToAiToolkit: (projectName, grids, appState) => {
         console.log('Preload: exportToAiToolkit args:', { projectName, grids });
         return ipcRenderer.invoke('export-to-ai-toolkit', projectName, grids, appState);

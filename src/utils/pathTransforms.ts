@@ -1,6 +1,6 @@
 import path from 'path';
 import url from 'url';
-import { ImageSlot } from '../interfaces/types';
+import { ImageSlot, DEFAULT_IMAGE_METADATA } from '../interfaces/types';
 
 export type GridMap = Record<string, (ImageSlot | null)[]>;
 
@@ -12,7 +12,7 @@ export function toRelativeGrids(grids: GridMap, projectPath: string): GridMap {
       if (imageSlot && imageSlot.path && imageSlot.path.startsWith('file://')) {
         const filePath = url.fileURLToPath(imageSlot.path);
         const relativePath = path.relative(projectPath, filePath).replace(/\\/g, '/');
-        return { ...imageSlot, path: relativePath };
+  return { ...imageSlot, path: relativePath, metadata: imageSlot.metadata || { ...DEFAULT_IMAGE_METADATA } };
       }
       return imageSlot;
     });
@@ -32,7 +32,7 @@ export function toAbsoluteGrids(grids: GridMap, projectDir: string): GridMap {
         !path.isAbsolute(imageSlot.path)
       ) {
         const absolutePath = path.join(projectDir, imageSlot.path);
-        return { ...imageSlot, path: absolutePath };
+  return { ...imageSlot, path: absolutePath, metadata: imageSlot.metadata || { ...DEFAULT_IMAGE_METADATA } };
       }
       return imageSlot;
     });

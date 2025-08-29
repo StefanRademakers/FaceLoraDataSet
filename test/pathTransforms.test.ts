@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import { toRelativeGrids, toAbsoluteGrids } from '../src/utils/pathTransforms';
 import type { GridMap } from '../src/utils/pathTransforms';
 
@@ -13,7 +14,7 @@ describe('pathTransforms', () => {
     const abs = process.platform === 'win32' ? 'C:/data/myproj/imgs/a.jpg' : '/data/myproj/imgs/a.jpg';
     const grids: GridMap = {
       Section1: [
-        { path: fileUrl(abs), caption: 'c1' },
+        { path: fileUrl(abs), caption: 'c1', metadata: { shotType: '', angle: '', lighting: '', environment: '', mood: '', action: '', likeness: { score: 1.0, ref: 'none' } } },
         null,
       ],
     } as any;
@@ -25,7 +26,7 @@ describe('pathTransforms', () => {
     const projectDir = process.platform === 'win32' ? 'C:/data/myproj' : '/data/myproj';
     const grids: GridMap = {
       Section1: [
-        { path: 'imgs/a.jpg', caption: '' },
+        { path: 'imgs/a.jpg', caption: '', metadata: { shotType: '', angle: '', lighting: '', environment: '', mood: '', action: '', likeness: { score: 1.0, ref: 'none' } } },
       ],
     } as any;
     const abs = toAbsoluteGrids(grids, projectDir);

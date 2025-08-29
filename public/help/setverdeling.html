@@ -1,0 +1,92 @@
+  <header>
+    <h1>📋 Character LoRA Dataset Checklist (100 images)</h1>
+    <p>Een compacte referentie voor het samenstellen en beoordelen van een flexibele, herkenbare Character LoRA dataset.</p>
+  </header>
+
+  <section>
+    <h2>1. Close-ups (45 beelden = 45%)</h2>
+    <p><strong>Doel:</strong> gezicht/identiteit locken</p>
+    <ul>
+      <li>Rotations &amp; Angles (~15) – frontaal, ¾ links/rechts, profiel links/rechts, rug met hoofd gedraaid</li>
+      <li>Expressions &amp; Emotions (~15) – neutraal, lachen, streng, dromerig, verbaasd, ogen dicht</li>
+      <li>Lighting variety (close) (~10) – front light, side light, rim light, golden hour, kunstlicht</li>
+      <li>Extreme close-ups (~5) – ogen, mond, detail baard/haar</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>2. Mediums (25 beelden = 25%)</h2>
+    <p><strong>Doel:</strong> brug tussen gezicht en lichaam, kleding en accessoires leren</p>
+    <ul>
+      <li>Torso / Waist-up (~10) – bovenlichaam, handen zichtbaar, armen gekruist</li>
+      <li>Medium-close (head &amp; shoulders) (~10) – minder strak dan close-up, meer omgeving</li>
+      <li>Action / Interaction (~5) – lezen, zitten, lopen, object vasthouden</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>3. Wides (30 beelden = 30%)</h2>
+    <p><strong>Doel:</strong> omgeving, context en variatie</p>
+    <ul>
+      <li>Full-body (~15) – persoon vult beeld grotendeels, staand, lopend, poserend</li>
+      <li>Environmental wides (~10) – karakter klein in beeld, natuur, stad, interieur, landschap dominant</li>
+      <li>Special compositions (~5) – silhouet, tegenlicht, over-the-shoulder, rugaanzicht</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>4. Orthogonale variatie (cross-tags)</h2>
+    <p>Deze hoeven geen aparte categorieën te zijn, maar moeten over de dataset verspreid voorkomen:</p>
+    <ul>
+      <li>Angles → frontaal, ¾, profiel, top-down, low angle</li>
+      <li>Lighting → daglicht, nacht, indoor kunstlicht, golden hour, backlight</li>
+      <li>Environment → neutraal/studio, natuur, stad, water, interieur</li>
+      <li>Clothing/accessoires → variaties in outfit, sjaal, ketting, eventueel props</li>
+      <li>Action/interaction → zitten, lopen, interactie met objecten</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>5. Dataset Health Check (automatisch in app)</h2>
+    <ul>
+      <li>✅ Groen = voldoende</li>
+      <li>⚠️ Geel = licht tekort/overschot</li>
+      <li>❌ Rood = groot disbalans</li>
+    </ul>
+    <h3>Voorbeeld melding</h3>
+    <ul>
+      <li>✅ Close-ups: 47/45 (oké)</li>
+      <li>⚠️ Mediums: 18/25 (te laag, +7 nodig)</li>
+      <li>❌ Wides: 35/30 (te veel, -5 aanbevolen)</li>
+      <li>⚠️ Nachtbeelden: slechts 2 aanwezig (aanvullen tot minstens 5)</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>🔢 Vuistregels voor dataset-grootte</h2>
+    <h3>1. Identiteit LoRA</h3>
+    <ul>
+      <li>20–40 beelden → basisherkenning</li>
+      <li>80–150 beelden → stabiel in hoeken, licht, expressies</li>
+      <li>150–300 beelden → bijna elke setting bruikbaar</li>
+      <li>Kwaliteit > kwantiteit</li>
+    </ul>
+    <h3>2. Stijl LoRA</h3>
+    <ul>
+      <li>50–100 beelden → basiseffect</li>
+      <li>200–400 beelden → stijl robuust</li>
+      <li>500–1000 beelden → stijl vervangt baseline</li>
+    </ul>
+    <h3>3. Complexere concepten</h3>
+    <ul>
+      <li>200–500 beelden → pose/fashion/product LoRA</li>
+      <li>1000+ beelden → universe/brede dataset</li>
+    </ul>
+    <h3>🚦 Beslisboom</h3>
+    <ul>
+      <li>Herkenbaar gezicht in close/medium/wide? → 80–120 beelden</li>
+      <li>Zelfde gezicht in veel situaties? → 150–250 beelden</li>
+      <li>Maximale flexibiliteit → 300–500+ beelden</li>
+    </ul>
+    <p>💡 Pro-tip: begin met 80–100 diverse beelden en vul later gericht aan.</p>
+  </section>

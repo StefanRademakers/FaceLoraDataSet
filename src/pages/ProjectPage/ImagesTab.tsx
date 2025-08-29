@@ -10,6 +10,8 @@ interface ImagesTabProps {
   setAppState: React.Dispatch<React.SetStateAction<AppState>>;
   showCaptions: boolean;
   setShowCaptions: (show: boolean) => void;
+  showMetadata: boolean;
+  setShowMetadata: (show: boolean) => void;
   fullscreenImage: string | null;
   setFullscreenImage: (img: string | null) => void;
   allImages: string[];
@@ -30,6 +32,8 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
   setAppState,
   showCaptions,
   setShowCaptions,
+  showMetadata,
+  setShowMetadata,
   fullscreenImage,
   setFullscreenImage,
   allImages,
@@ -86,6 +90,28 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               Clear Captions
             </Button>
           )}
+          {showMetadata && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              onClick={() => {
+                if (!window.confirm('Clear ALL metadata in every section? This cannot be undone. Continue?')) return;
+                setAppState(prev => {
+                  const newGrids: typeof prev.grids = {} as any;
+                  for (const [section, slots] of Object.entries(prev.grids)) {
+                    newGrids[section] = slots.map(slot => slot ? { ...slot, metadata: { ...slot.metadata, shotType: '', angle: '', lighting: '', environment: '', mood: '', action: '', likeness: { score: 1.0, ref: 'none' } } } : slot);
+                  }
+                  const updated = { ...prev, grids: newGrids };
+                  window.electronAPI.saveProject(updated);
+                  return updated;
+                });
+              }}
+              sx={{ mb: 2, borderColor: '#f44336', color: '#f44336', ml: 1 }}
+            >
+              Clear Metadata
+            </Button>
+          )}
         </div>
       </div>
       {Object.entries(appState.grids).map(([sectionTitle, images]) => {
@@ -110,6 +136,22 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               onClickImage={handleClickImage}
               onCaptionChange={(index, caption) => handleCaptionChange(sectionTitle, index, caption)}
               showCaptions={showCaptions}
+              showMetadata={showMetadata}
+              onMetadataChange={(index, metadata) => {
+                setAppState(prev => {
+                  const newGrids = { ...prev.grids };
+                  const newImages = [...newGrids[sectionTitle]];
+                  const imageSlot = newImages[index];
+                  if (imageSlot) {
+                    newImages[index] = { ...imageSlot, metadata: { ...imageSlot.metadata, ...metadata } } as any;
+                    newGrids[sectionTitle] = newImages;
+                    const updated = { ...prev, grids: newGrids };
+                    window.electronAPI.saveProject(updated);
+                    return updated;
+                  }
+                  return prev;
+                });
+              }}
             />
           </div>
         );

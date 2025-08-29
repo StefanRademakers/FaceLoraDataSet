@@ -1,7 +1,32 @@
+export interface ImageMetadata {
+  shotType: string; // extreme-close | close | medium | wide
+  angle: string; // frontal | three-quarter | profile | back | low-angle | high-angle
+  lighting: string; // daylight | indoor | night | sunset | studio
+  environment: string; // neutral | indoor | outdoor | nature | city | sky
+  mood: string; // neutral | smiling | serious | surprised | dreamy | stern | relaxed | contemplative
+  action: string; // stand | sit | walk | gesture | hold-object | interact | none
+  likeness: {
+    score: number; // 0..1 (filled later by insightface, default 1.0)
+    ref: string; // reference id (default 'none')
+  };
+}
+
 export interface ImageSlot {
   path: string;
   caption: string;
+  // Optional for backward compatibility with older saved projects; code will hydrate defaults.
+  metadata?: ImageMetadata;
 }
+
+export const DEFAULT_IMAGE_METADATA: ImageMetadata = {
+  shotType: '',
+  angle: '',
+  lighting: '',
+  environment: '',
+  mood: '',
+  action: '',
+  likeness: { score: 1.0, ref: 'none' },
+};
 
 export interface Descriptions {
   notes: string;

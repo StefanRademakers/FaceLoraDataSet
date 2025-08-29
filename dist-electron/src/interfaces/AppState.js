@@ -1,6 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DEFAULT_APP_STATE = void 0;
+exports.ensureImageSlotMetadata = ensureImageSlotMetadata;
+const types_1 = require("./types");
 exports.DEFAULT_APP_STATE = {
     version: 1,
     projectName: '',
@@ -16,3 +18,16 @@ exports.DEFAULT_APP_STATE = {
     },
     promptTemplate: '',
 };
+// Utility to ensure an ImageSlot has metadata (used during load/migration)
+function ensureImageSlotMetadata(slot) {
+    if (!slot)
+        return slot;
+    if (!slot.metadata) {
+        return { ...slot, metadata: { ...types_1.DEFAULT_IMAGE_METADATA } };
+    }
+    // Ensure likeness sub-object exists
+    if (!slot.metadata.likeness) {
+        slot.metadata.likeness = { score: 1.0, ref: 'none' };
+    }
+    return slot;
+}

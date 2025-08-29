@@ -20,6 +20,9 @@ declare global {
       getOpenAIKey: () => Promise<string | null>;
       setOpenAIKey: (key: string) => Promise<boolean>;
       autoGenerateCaption: (imagePath: string, token: string, subjectAddition: string, promptTemplate?: string) => Promise<string>;
+      autoGenerateMetadata: (imagePath: string) => Promise<{
+        shotType: string; angle: string; lighting: string; environment: string; mood: string; action: string; likeness: { score: number; ref: string };
+      }>;
   exportToAiToolkit: (projectName: string, grids: Record<string, { path: string; caption: string }[]>, appState: AppState) => Promise<{ success: boolean; folderPath: string }>;
       exportBackupZip: (appState: AppState) => Promise<{ success: boolean; path?: string; error?: string }>;
     };
