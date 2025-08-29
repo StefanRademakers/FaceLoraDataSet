@@ -237,6 +237,16 @@ export function useProjectPageState(initialProjectName: string) {
     }
   };
 
+  const handleExportCaptionsCsv = async () => {
+    const { exportCaptionsCsv } = await import('../../utils/exportCaptionsCsv');
+    await exportCaptionsCsv(appState);
+  };
+
+  const handleExportGridOverviews = async () => {
+    const { exportGridOverviews } = await import('../../utils/exportGridOverviews');
+    await exportGridOverviews(appState);
+  };
+
   const handleDeleteImage = (imagePath: string) => {
     const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
 
@@ -303,5 +313,7 @@ export function useProjectPageState(initialProjectName: string) {
     handleExportToAiToolkit,
     handleExportBackup,
   handleExportStaticHtml,
+  handleExportCaptionsCsv,
+  handleExportGridOverviews,
   };
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import Button from '@mui/material/Button';
 import { AppState } from '../../interfaces/AppState';
 import { GRID_SECTION_CONFIGS } from '../../config/gridConfig';
 import GridSection from '../../components/GridSection';
@@ -63,6 +64,28 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
         </div>
         <div>
           {/* ...Switch, TextFields, etc. can be added here or in parent */}
+          {showCaptions && (
+            <Button
+              variant="outlined"
+              color="secondary"
+              size="small"
+              onClick={() => {
+                if (!window.confirm('Clear ALL captions in every section? This cannot be undone. Continue?')) return;
+                setAppState(prev => {
+                  const newGrids: typeof prev.grids = {} as any;
+                  for (const [section, slots] of Object.entries(prev.grids)) {
+                    newGrids[section] = slots.map(slot => slot ? { ...slot, caption: '' } : slot);
+                  }
+                  const updated = { ...prev, grids: newGrids };
+                  window.electronAPI.saveProject(updated);
+                  return updated;
+                });
+              }}
+              sx={{ mb: 2, borderColor: '#f44336', color: '#f44336', ml: 1 }}
+            >
+              Clear Captions
+            </Button>
+          )}
         </div>
       </div>
       {Object.entries(appState.grids).map(([sectionTitle, images]) => {

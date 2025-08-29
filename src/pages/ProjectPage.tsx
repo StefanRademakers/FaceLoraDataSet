@@ -50,6 +50,16 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
     setSnackbarMessage('Static HTML export created');
     setSnackbarOpen(true);
   };
+  const handleExportCaptionsCsv = async () => {
+    await state.handleExportCaptionsCsv();
+    setSnackbarMessage('Captions CSV exported');
+    setSnackbarOpen(true);
+  };
+  const handleExportGridOverviews = async () => {
+    await state.handleExportGridOverviews();
+    setSnackbarMessage('Grid overviews zip exported');
+    setSnackbarOpen(true);
+  };
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
   return (
@@ -176,6 +186,8 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             handleExportToAiToolkit={handleExportToAiToolkit}
             handleExportBackup={handleExportBackup}
             handleExportStaticHtml={handleExportStaticHtml}
+            handleExportCaptionsCsv={handleExportCaptionsCsv}
+            handleExportGridOverviews={handleExportGridOverviews}
             snackbarOpen={snackbarOpen}
             snackbarMessage={snackbarMessage}
             onSnackbarClose={handleSnackbarClose}

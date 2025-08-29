@@ -19,6 +19,8 @@ interface ExportTabProps {
   handleExportToAiToolkit: () => Promise<void>;
   handleExportBackup: () => Promise<void>;
   handleExportStaticHtml: () => Promise<void>;
+  handleExportCaptionsCsv: () => Promise<void>;
+  handleExportGridOverviews: () => Promise<void>;
   snackbarOpen: boolean;
   snackbarMessage: string;
   onSnackbarClose: () => void;
@@ -32,6 +34,8 @@ const ExportTab: React.FC<ExportTabProps> = ({
   handleExportToAiToolkit,
   handleExportBackup,
   handleExportStaticHtml,
+  handleExportCaptionsCsv,
+  handleExportGridOverviews,
   snackbarOpen,
   snackbarMessage,
   onSnackbarClose,
@@ -90,6 +94,24 @@ const ExportTab: React.FC<ExportTabProps> = ({
           sx={{ mt: 3, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
         >
           Export Static HTML File
+        </Button>
+        <Button
+          onClick={handleExportCaptionsCsv}
+          variant="outlined"
+          color="primary"
+          fullWidth
+          sx={{ mt: 2, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
+        >
+          Export Captions CSV
+        </Button>
+        <Button
+          onClick={handleExportGridOverviews}
+          variant="outlined"
+          color="primary"
+          fullWidth
+          sx={{ mt: 2, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
+        >
+          Export Grid Overviews
         </Button>
       </Paper>
       <Snackbar

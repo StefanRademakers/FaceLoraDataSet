@@ -14,10 +14,13 @@ export class OpenAICaptioner {
 
     private buildPrompt(token: string, subjectAddition: string = '', template?: string): string {
         const defaultTemplate = `You are an AI assistant preparing training captions for a LoRA dataset.
-This is a photo of {{token}}{{addition}}. Analyze it in detail and return a single, 
-high-quality caption describing the visual features of the person, facial features, clothing, age and their setting - suitable for LoRA training. 
-Use "{{token}}" as the subject placeholder.
-Only return the caption. Do not include any explanation or punctuation outside the caption itself.`;
+The images are AI-generated and depict a fictional character, not a real person.
+Start the caption with EXACTLY: {{token}}{{addition}}, 
+After that, describe only variable aspects such as clothing, accessories, pose, body framing, environment, time of day, lighting, mood, camera details (focal length/angle), composition, and context-specific actions.
+Do NOT mention or paraphrase anything about age, hair color, beard, face shape, head features, gender, or synonyms thereof after {{token}}{{addition}}.
+Do NOT repeat {{token}} or any part of {{addition}} anywhere else in the caption.
+Write one concise sentence in English, using clear, concrete visual descriptors suitable for LoRA training.
+Only return the caption text (no quotes, no leading labels, no extra lines).`;
         const addition = subjectAddition.trim() ? ' ' + subjectAddition.trim() : '';
         const active = (template && template.trim().length > 0 ? template : defaultTemplate)
             .replace(/{{token}}/g, token)
