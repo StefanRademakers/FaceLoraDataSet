@@ -307,15 +307,13 @@ ipcMain.handle('auto-generate-metadata', async (event, imagePath: string) => {
     // Load updated settings
     settings = getSettings();
     const toolkitRoot = settings.aiToolkitDatasetsPath;
-  // Base directory for project exports
-  const projectRootDir = path.join(toolkitRoot, projectName);
-  await fs.promises.mkdir(projectRootDir, { recursive: true });
+  // Place timestamped export directly inside datasets folder (no parent project directory)
   // Timestamped subdirectory (same pattern as zip exports)
   const now = new Date();
   const pad = (n: number) => n.toString().padStart(2, '0');
   const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
   const stampedDirName = `${projectName}_${dateStr}`;
-  const targetDir = path.join(projectRootDir, stampedDirName);
+  const targetDir = path.join(toolkitRoot, stampedDirName);
   await fs.promises.mkdir(targetDir, { recursive: true });
   const doResize = settings.resizeExportImages !== false; // default true
   const maxWidth = 1024;

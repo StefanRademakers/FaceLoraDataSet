@@ -11,7 +11,7 @@ export interface AppState {
 }
 
 export const DEFAULT_APP_STATE: AppState = {
-  version: 1,
+  version: 2, // bumped for expanded grid model (new sections & slot counts)
   projectName: '',
   grids: {},
   descriptions: {

@@ -21,9 +21,10 @@ interface GridSectionProps {
   showCaptions: boolean;
   showMetadata: boolean;
   onMetadataChange: (index: number, metadata: Partial<ImageMetadata>) => void;
+  showEmptySlots?: boolean; // visual toggle only
 }
 
-const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, subjectAddition, promptTemplate, images, onClickImage, onCaptionChange, showCaptions, showMetadata, onMetadataChange }) => {
+const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, subjectAddition, promptTemplate, images, onClickImage, onCaptionChange, showCaptions, showMetadata, onMetadataChange, showEmptySlots = true }) => {
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); // Necessary to allow dropping
   };
@@ -124,7 +125,7 @@ const GridSection: React.FC<GridSectionProps> = ({ title, cols, loraTrigger, sub
       </div>
       <div className={`grid ${gridCols} gap-4`}>
         {images.map((imageSlot, index) => (
-          <div key={index} className="flex flex-col">
+          <div key={index} className="flex flex-col" style={!showEmptySlots && !imageSlot ? { display: 'none' } : undefined}>
             <div
               data-tile-index={index}
               className="relative w-64 h-64 bg-gray-800 rounded-lg flex items-center justify-center cursor-pointer overflow-hidden"

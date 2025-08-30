@@ -305,15 +305,13 @@ const createWindow = () => {
         // Load updated settings
         settings = (0, settings_1.getSettings)();
         const toolkitRoot = settings.aiToolkitDatasetsPath;
-        // Base directory for project exports
-        const projectRootDir = path_1.default.join(toolkitRoot, projectName);
-        await fs_1.default.promises.mkdir(projectRootDir, { recursive: true });
+        // Place timestamped export directly inside datasets folder (no parent project directory)
         // Timestamped subdirectory (same pattern as zip exports)
         const now = new Date();
         const pad = (n) => n.toString().padStart(2, '0');
         const dateStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
         const stampedDirName = `${projectName}_${dateStr}`;
-        const targetDir = path_1.default.join(projectRootDir, stampedDirName);
+        const targetDir = path_1.default.join(toolkitRoot, stampedDirName);
         await fs_1.default.promises.mkdir(targetDir, { recursive: true });
         const doResize = settings.resizeExportImages !== false; // default true
         const maxWidth = 1024;

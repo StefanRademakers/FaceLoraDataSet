@@ -71,8 +71,9 @@ const FullscreenViewer: React.FC<FullscreenViewerProps> = ({ image, onClose, onN
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[1000] pt-4"
       onClick={onClose}
+      style={{ backdropFilter: 'blur(2px)' }}
     >
       <img src={normalizedImage} alt="fullscreen" className="max-w-full max-h-full" />
       <button

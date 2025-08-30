@@ -17,6 +17,7 @@ export function useProjectPageState(initialProjectName: string) {
   const [activeTab, setActiveTab] = useState<ProjectTabs>('images');
   const [showCaptions, setShowCaptions] = useState(true);
   const [showMetadata, setShowMetadata] = useState(false);
+  const [showEmptySlots, setShowEmptySlots] = useState(true); // new toggle for hiding empty slots
   const [isProjectLoaded, setIsProjectLoaded] = useState(false);
 
   const stateRef = useRef(appState);
@@ -28,19 +29,28 @@ export function useProjectPageState(initialProjectName: string) {
   const loadProjectData = async (name?: string) => {
     const result = await window.electronAPI.loadProject(name);
     if (result.success && result.data) {
-      // Patch grids for absolute file:// paths and ensure correct slot count
+      // Patch grids for absolute file:// paths and ensure correct slot count dynamically
       const absolutePathGrids: Record<string, (ImageSlot | null)[]> = { ...initialGrids };
-      for (const section in result.data.grids) {
-        const mapped = result.data.grids[section].map((image: ImageSlot | null) => {
+      for (const [section, slots] of Object.entries(result.data.grids)) {
+        const mapped = slots.map((image: ImageSlot | null) => {
           if (!image) return null;
           const path = image.path.startsWith('file://') ? image.path : `file://${image.path.replace(/\\/g, '/')}`;
           return { ...image, path, metadata: image.metadata || { ...DEFAULT_IMAGE_METADATA } };
         });
-        const targetSize = section === 'Additional Images' ? 40 : 15;
+        const targetSize = GRID_SECTION_CONFIGS[section]?.slots || mapped.length; // fallback to existing length if unknown section
         if (mapped.length < targetSize) {
           mapped.push(...Array(targetSize - mapped.length).fill(null));
+        } else if (mapped.length > targetSize) {
+          // If a section was downsized in config (rare), preserve existing images by keeping array length (do not truncate)
+          // Optionally could slice, but safer for backward compatibility
         }
         absolutePathGrids[section] = mapped;
+      }
+      // Ensure any newly added sections (not present in legacy project) are initialized
+      for (const section of Object.keys(GRID_SECTION_CONFIGS)) {
+        if (!absolutePathGrids[section]) {
+          absolutePathGrids[section] = Array(GRID_SECTION_CONFIGS[section].slots).fill(null);
+        }
       }
       setAppState({
         ...result.data,
@@ -303,6 +313,8 @@ export function useProjectPageState(initialProjectName: string) {
   setShowCaptions,
   showMetadata,
   setShowMetadata,
+  showEmptySlots,
+  setShowEmptySlots,
     isProjectLoaded,
     setIsProjectLoaded,
     stateRef,

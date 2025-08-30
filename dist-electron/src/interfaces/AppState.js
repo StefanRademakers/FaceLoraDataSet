@@ -4,7 +4,7 @@ exports.DEFAULT_APP_STATE = void 0;
 exports.ensureImageSlotMetadata = ensureImageSlotMetadata;
 const types_1 = require("./types");
 exports.DEFAULT_APP_STATE = {
-    version: 1,
+    version: 2, // bumped for expanded grid model (new sections & slot counts)
     projectName: '',
     grids: {},
     descriptions: {

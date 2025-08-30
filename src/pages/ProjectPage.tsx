@@ -79,6 +79,9 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
       } else if (key === 'm') {
         state.setShowMetadata(prev => !prev);
         e.preventDefault();
+      } else if (key === 'h') {
+        state.setShowEmptySlots(prev => !prev);
+        e.preventDefault();
       }
     };
     window.addEventListener('keydown', handler);
@@ -144,6 +147,22 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
                   ml: 4
                 }}
               />
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={state.showEmptySlots}
+                    onChange={() => state.setShowEmptySlots(!state.showEmptySlots)}
+                    color="primary"
+                  />
+                }
+                label="Show Empty Slots"
+                sx={{
+                  color: 'white',
+                  '.MuiSwitch-thumb': { backgroundColor: '#90caf9' },
+                  '.MuiSwitch-track': { backgroundColor: '#424242' },
+                  ml: 4
+                }}
+              />
             </div>
             <div className="grid grid-cols-2 gap-4 mb-8">
               <div>
@@ -193,6 +212,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             setShowCaptions={state.setShowCaptions}
             showMetadata={state.showMetadata}
             setShowMetadata={state.setShowMetadata}
+            showEmptySlots={state.showEmptySlots}
             fullscreenImage={state.fullscreenImage}
             setFullscreenImage={state.setFullscreenImage}
             allImages={state.allImages}

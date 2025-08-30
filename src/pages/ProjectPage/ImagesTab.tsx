@@ -12,6 +12,7 @@ interface ImagesTabProps {
   setShowCaptions: (show: boolean) => void;
   showMetadata: boolean;
   setShowMetadata: (show: boolean) => void;
+  showEmptySlots: boolean;
   fullscreenImage: string | null;
   setFullscreenImage: (img: string | null) => void;
   allImages: string[];
@@ -34,6 +35,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
   setShowCaptions,
   showMetadata,
   setShowMetadata,
+  showEmptySlots,
   fullscreenImage,
   setFullscreenImage,
   allImages,
@@ -132,6 +134,7 @@ const ImagesTab: React.FC<ImagesTabProps> = ({
               subjectAddition={appState.descriptions.subjectAddition}
               promptTemplate={appState.promptTemplate}
               images={images}
+              showEmptySlots={showEmptySlots}
               onDropImage={(slotIndex: number, filePath: string) => handleDropImage(sectionTitle, slotIndex, filePath)}
               onClickImage={handleClickImage}
               onCaptionChange={(index, caption) => handleCaptionChange(sectionTitle, index, caption)}
