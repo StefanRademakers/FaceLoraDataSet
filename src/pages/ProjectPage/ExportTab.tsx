@@ -21,6 +21,7 @@ interface ExportTabProps {
   handleExportStaticHtml: () => Promise<void>;
   handleExportCaptionsCsv: () => Promise<void>;
   handleExportGridOverviews: () => Promise<void>;
+  handleExportShotTypeZip: () => Promise<void>;
   snackbarOpen: boolean;
   snackbarMessage: string;
   onSnackbarClose: () => void;
@@ -36,6 +37,7 @@ const ExportTab: React.FC<ExportTabProps> = ({
   handleExportStaticHtml,
   handleExportCaptionsCsv,
   handleExportGridOverviews,
+  handleExportShotTypeZip,
   snackbarOpen,
   snackbarMessage,
   onSnackbarClose,
@@ -112,6 +114,15 @@ const ExportTab: React.FC<ExportTabProps> = ({
           sx={{ mt: 2, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
         >
           Export Grid Overviews
+        </Button>
+        <Button
+          onClick={handleExportShotTypeZip}
+          variant="outlined"
+          color="primary"
+          fullWidth
+          sx={{ mt: 2, fontWeight: 600, borderColor: '#90caf9', color: '#90caf9' }}
+        >
+          Export ShotType Zip
         </Button>
       </Paper>
       <Snackbar

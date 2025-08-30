@@ -63,6 +63,28 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
   };
   const handleSnackbarClose = () => setSnackbarOpen(false);
 
+  // Keyboard shortcuts: C toggles captions, M toggles metadata (only on Images tab)
+  React.useEffect(() => {
+    if (state.activeTab !== 'images') return; // only active on images tab
+    const handler = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return; // ignore combinations
+      const target = e.target as HTMLElement;
+      const tag = target?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || target.isContentEditable) return; // don't interfere with typing
+      const key = e.key.toLowerCase();
+      if (key === 'c') {
+        state.setShowCaptions(prev => !prev);
+        e.preventDefault();
+      } else if (key === 'm') {
+        state.setShowMetadata(prev => !prev);
+        e.preventDefault();
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [state.activeTab, state.setShowCaptions, state.setShowMetadata]);
+
   return (
     <>
       <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#222', paddingTop: 0 }}>
@@ -210,6 +232,7 @@ const ProjectPage: React.FC<ProjectPageProps> = ({ projectName, onGoToLanding })
             handleExportStaticHtml={handleExportStaticHtml}
             handleExportCaptionsCsv={handleExportCaptionsCsv}
             handleExportGridOverviews={handleExportGridOverviews}
+            handleExportShotTypeZip={state.handleExportShotTypeZip}
             snackbarOpen={snackbarOpen}
             snackbarMessage={snackbarMessage}
             onSnackbarClose={handleSnackbarClose}

@@ -248,6 +248,11 @@ export function useProjectPageState(initialProjectName: string) {
     await exportGridOverviews(appState);
   };
 
+  const handleExportShotTypeZip = async () => {
+    const { exportShotTypeZip } = await import('../../utils/exportShotTypeZip');
+    await exportShotTypeZip(appState);
+  };
+
   const handleDeleteImage = (imagePath: string) => {
     const baseNameToDelete = imagePath.substring(imagePath.lastIndexOf('/') + 1).split('?')[0];
 
@@ -318,5 +323,6 @@ export function useProjectPageState(initialProjectName: string) {
   handleExportStaticHtml,
   handleExportCaptionsCsv,
   handleExportGridOverviews,
+  handleExportShotTypeZip,
   };
 }
